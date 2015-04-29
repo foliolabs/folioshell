@@ -1,0 +1,35 @@
+#!/usr/bin/env php
+<?php
+/**
+ * @copyright	Copyright (C) 2007 - 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
+ * @license		Mozilla Public License, version 2.0
+ * @link		http://github.com/nooku/wordpress-console for the canonical source repository
+ */
+
+$autoload = __DIR__.'/../vendor/autoload.php';
+if(is_file($autoload)) {
+    require $autoload;
+} else {
+   require __DIR__.'/../../../../vendor/autoload.php';
+}
+
+use Symfony\Component\Console\Application;
+
+$application = new Application('WordPress Console Tools', '1.0');
+
+$application->add(new Nooku\Console\Command\Symlink());
+$application->add(new Nooku\Console\Command\SiteCreate());
+$application->add(new Nooku\Console\Command\SiteDelete());
+
+/*
+$application->add(new Nooku\Console\Command\SiteToken());
+$application->add(new Nooku\Console\Command\ExtensionSymlink());
+$application->add(new Nooku\Console\Command\ExtensionInstall());
+$application->add(new Nooku\Console\Command\ExtensionRegister());
+$application->add(new Nooku\Console\Command\ExtensionInstallFile());
+*/
+
+$application->add(new Nooku\Console\Command\Versions());
+
+
+$application->run();

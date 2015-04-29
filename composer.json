@@ -1,0 +1,22 @@
+{
+    "name": "nooku/wordpress-console",
+    "type": "project",
+    "license": "MPLv2",
+    "description": "This command-line script helps to ease the management of WordPress sites in your development environment.",
+    "keywords": ["wordpress", "wp", "console", "tools"],
+    "homepage": "https://github.com/nooku/wordpress-console",
+    "authors": [
+        {
+            "name": "Nooku",
+            "email": "info@nooku.org",
+            "homepage": "https://www.nooku.org"
+        }
+    ],
+    "require": {
+        "symfony/console": "2.4.*"
+    },
+    "autoload": {
+        "psr-0": {"Nooku\\": "src/"}
+    },
+    "bin": ["bin/wordpress"]
+}
