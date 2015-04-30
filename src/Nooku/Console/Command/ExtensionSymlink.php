@@ -57,14 +57,8 @@ class ExtensionSymlink extends SiteAbstract
     public function symlinkProjects(InputInterface $input, OutputInterface $output)
     {
         static $dependencies = array(
-            'nooku'   => array('nooku-framework-wordpress'),
-            /* 
-            //TODO: When they're ready we can include them again.
-            'extman'  => array('koowa', 'nooku-framework-joomla', 'nooku-framework'),
-            'docman'  => array('extman', 'koowa', 'nooku-framework-joomla', 'nooku-framework', 'com_files'),
-            'fileman' => array('extman', 'koowa', 'nooku-framework-joomla', 'nooku-framework', 'com_files'),
-            'logman'  => array('extman', 'koowa', 'nooku-framework-joomla', 'nooku-framework', 'com_activities')
-            */
+            'nooku-framework-wordpress' => array('nooku-framework'),
+            'wordpress-todo'            => array('nooku-framework-wordpress')
         );
 
         $project_folder = $input->getOption('projects-dir');
@@ -73,21 +67,7 @@ class ExtensionSymlink extends SiteAbstract
         foreach ($this->symlink as $symlink)
         {
             $projects[] = $symlink;
-            if (array_key_exists($symlink, $dependencies)) {
-                $projects = array_merge($projects, $dependencies[$symlink]);
-            }
-        }
-
-        // If we are symlinking Koowa, we need to create this structure to allow multiple symlinks in them
-        if (in_array('nooku-framework-joomla', $projects) || in_array('koowa', $projects))
-        {
-            $dirs = array($this->target_dir.'/libraries/koowa/components', $this->target_dir.'/media/koowa');
-            foreach ($dirs as $dir)
-            {
-                if (!is_dir($dir)) {
-                    mkdir($dir, 0777, true);
-                }
-            }
+            $projects   = array_merge($projects, $this->_getDependencies($symlink, $dependencies));
         }
 
         foreach ($projects as $project)
@@ -98,34 +78,9 @@ class ExtensionSymlink extends SiteAbstract
                 continue;
             }
 
-            if ($this->_isNookuFramework($root))
-            {
-                $vendor_path = $this->target_dir.'/vendor';
-
-                if(file_exists($this->target_dir.'/composer.json'))
-                {
-                    $content  = file_get_contents($this->target_dir.'/composer.json');
-                    $composer = json_decode($content);
-
-                    if(isset($composer->config->{'vendor-dir'})) {
-                        $vendor_path = $this->target_dir.'/'.$composer->config->{'vendor-dir'};
-                    }
-                }
-
-                $destination = $vendor_path.'/nooku/nooku-framework';
-
-                if (!is_dir(dirname($destination))) {
-                    mkdir(dirname($destination), 0777, true);
-                }
-
-                $media_source      = $root.'/code/resources/assets';
-                $media_destination = $this->target_dir.'/media/koowa/framework';
-
-                `ln -sf $root $destination`;
-                `ln -sf $media_source $media_destination`;
-            }
-            else if ($this->_isKoowaComponent($root)) {
-                $this->_symlinkKoowaComponent($root);
+            // TODO: We still need to figure out where to place the core Nooku Framework.
+            if ($this->_isNookuFramework($root)) {
+                `ln -sf $root $this->target_dir/wp-content/plugins/nooku`;
             }
             else
             {
@@ -142,37 +97,30 @@ class ExtensionSymlink extends SiteAbstract
         }
     }
 
+    /**
+     * Look for the dependencies of the dependency
+     *
+     * @param  string $project      The directory name of Project
+     * @param  array $dependencies  An assoc array of dependency declarations
+     * @return array                An array of dependencies
+     */
+    protected function _getDependencies($project, $dependencies)
+    {
+        $projects = array();
+
+        if(array_key_exists($project, $dependencies) && is_array($dependencies[$project])) {
+            $projects = $dependencies[$project];
+
+            foreach ($projects as $dependency) {
+                $projects = array_merge($projects, $this->_getDependencies($dependency, $dependencies));
+            }
+        }
+
+        return $projects;
+    }
+
     protected function _isNookuFramework($folder)
     {
         return is_file($folder.'/code/koowa.php');
-    }
-
-    protected function _isKoowaComponent($folder)
-    {
-        return is_file($folder.'/koowa-component.xml');
-    }
-
-    protected function _symlinkKoowaComponent($folder)
-    {
-        if (is_file($folder.'/koowa-component.xml'))
-        {
-            $xml       = simplexml_load_file($folder.'/koowa-component.xml');
-            $component = 'com_'.$xml->name;
-
-            $destination = $this->target_dir.'/libraries/koowa/components/'.$component;
-
-            `ln -sf $folder $destination`;
-
-            // Special treatment for media files
-            $media = $folder.'/resources/assets';
-            $target = $this->target_dir.'/media/koowa/'.$component;
-
-            if (is_dir($media) && !file_exists($target)) {
-                `ln -sf $media $target`;
-            }
-
-            return true;
-        }
-        else return false;
     }
 }
