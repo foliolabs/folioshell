@@ -56,18 +56,13 @@ class ExtensionSymlink extends SiteAbstract
 
     public function symlinkProjects(InputInterface $input, OutputInterface $output)
     {
-        static $dependencies = array(
-            'nooku-framework-wordpress' => array('nooku-framework'),
-            'wordpress-todo'            => array('nooku-framework-wordpress')
-        );
-
         $project_folder = $input->getOption('projects-dir');
 
         $projects = array();
         foreach ($this->symlink as $symlink)
         {
             $projects[] = $symlink;
-            $projects   = array_merge($projects, $this->_getDependencies($symlink, $dependencies));
+            $projects   = array_merge($projects, $this->_getDependencies($symlink));
         }
 
         foreach ($projects as $project)
@@ -95,28 +90,6 @@ class ExtensionSymlink extends SiteAbstract
                 }
             }
         }
-    }
-
-    /**
-     * Look for the dependencies of the dependency
-     *
-     * @param  string $project      The directory name of Project
-     * @param  array $dependencies  An assoc array of dependency declarations
-     * @return array                An array of dependencies
-     */
-    protected function _getDependencies($project, $dependencies)
-    {
-        $projects = array();
-
-        if(array_key_exists($project, $dependencies) && is_array($dependencies[$project])) {
-            $projects = $dependencies[$project];
-
-            foreach ($projects as $dependency) {
-                $projects = array_merge($projects, $this->_getDependencies($dependency, $dependencies));
-            }
-        }
-
-        return $projects;
     }
 
     protected function _isNookuFramework($folder)

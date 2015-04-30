@@ -1,0 +1,4 @@
+{
+    "nooku-framework-wordpress" : ["nooku-framework"],
+    "wordpress-todo"            : ["nooku-framework-wordpress"]
+}
