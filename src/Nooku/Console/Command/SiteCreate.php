@@ -131,16 +131,17 @@ class SiteCreate extends SiteAbstract
         $this->createFolder($input, $output);
         $this->createDatabase($input, $output);
         $this->modifyConfiguration();
-        //$this->installWordPress($input, $output);
+        $this->installWordPress($input, $output);
         $this->addVirtualHost($input, $output);
         $this->symlinkProjects($input, $output);
-        //$this->installExtensions($input, $output);
-        //$this->enableWebInstaller($input, $output);
+        $this->installExtensions($input, $output);
 
         if ($this->version)
         {
-            $output->writeln("Your new WordPress $this->version site has been created.");
-            //$output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
+            $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
+            $output->writeln("It was installed using the domain name <info>$this->site.dev</info>.");
+            $output->writeln("Don't forget to add <info>$this->site.dev</info> to your <info>/etc/hosts</info>");
+            $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
         }
     }
 
@@ -201,10 +202,8 @@ class SiteCreate extends SiteAbstract
 
     public function installWordPress()
     {
-        /**
-         * TODO: Use WP-CLI to Bootstrap WordPress
-         */
-        return;
+        $wp_cli = realpath(__DIR__.'/../../../../vendor/bin/wp');
+        `$wp_cli core install --url=$this->site.dev --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev`;
     }
 
     public function modifyConfiguration()
@@ -290,63 +289,15 @@ class SiteCreate extends SiteAbstract
         {
             $extension_input = new ArrayInput(array(
                 'extension:install',
-                'site'      => $input->getArgument('site'),
-                'extension' => $this->symlink,
-                '--www'     => $this->www
+                'site'           => $input->getArgument('site'),
+                'extension'      => $this->symlink,
+                '--www'          => $this->www,
+                '--projects-dir' => $input->getOption('projects-dir')
             ));
             $installer = new ExtensionInstall();
 
             $installer->run($extension_input, $output);
         }
-    }
-
-    public function enableWebInstaller(InputInterface $input, OutputInterface $output)
-    {
-        if(!$this->version || version_compare($this->version, '3.2.0', '<')) {
-            return;
-        }
-
-        $xml = simplexml_load_file('http://appscdn.joomla.org/webapps/jedapps/webinstaller.xml');
-
-        if(!$xml)
-        {
-            $output->writeln('<warning>Failed to install web installer</warning>');
-
-            return;
-        }
-
-        $url = '';
-        foreach($xml->update->downloads->children() as $download)
-        {
-            $attributes = $download->attributes();
-            if($attributes->type == 'full' && $attributes->format == 'zip')
-            {
-                $url = (string) $download;
-                break;
-            }
-        }
-
-        if(empty($url)) {
-            return;
-        }
-
-        $filename = self::$files.'/cache/'.basename($url);
-        if(!file_exists($filename))
-        {
-            $bytes = file_put_contents($filename, fopen($url, 'r'));
-            if($bytes === false || $bytes == 0) {
-                return;
-            }
-        }
-
-        `mkdir -p $this->target_dir/plugins/installer`;
-        `cd $this->target_dir/plugins/installer/ && unzip -o $filename`;
-
-        $sql = "INSERT INTO `j_extensions` (`name`, `type`, `element`, `folder`, `enabled`, `access`, `manifest_cache`) VALUES ('plg_installer_webinstaller', 'plugin', 'webinstaller', 'installer', 1, 1, '{\"name\":\"plg_installer_webinstaller\",\"type\":\"plugin\",\"version\":\"".$xml->update->version."\",\"description\":\"Web Installer\"}');";
-        $sql = escapeshellarg($sql);
-
-        $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-        exec(sprintf("mysql -u'%s' %s %s -e %s", $this->mysql->user, $password, $this->target_db, $sql));
     }
 
     public function setVersion($version)

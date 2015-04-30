@@ -21,10 +21,10 @@ $application->add(new Nooku\Console\Command\Symlink());
 $application->add(new Nooku\Console\Command\SiteCreate());
 $application->add(new Nooku\Console\Command\SiteDelete());
 $application->add(new Nooku\Console\Command\ExtensionSymlink());
+$application->add(new Nooku\Console\Command\ExtensionInstall());
 
 /*
 $application->add(new Nooku\Console\Command\SiteToken());
-$application->add(new Nooku\Console\Command\ExtensionInstall());
 $application->add(new Nooku\Console\Command\ExtensionRegister());
 $application->add(new Nooku\Console\Command\ExtensionInstallFile());
 */
