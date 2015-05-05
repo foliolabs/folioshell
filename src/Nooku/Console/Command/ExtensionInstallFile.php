@@ -27,7 +27,7 @@ class ExtensionInstallFile extends SiteAbstract
             ->addArgument(
                 'extension',
                 InputArgument::REQUIRED | InputArgument::IS_ARRAY,
-                'A list of full paths to extension packages (file or directory) to install'
+                'A list of full paths to extension packages (package file or url) to install'
             );
     }
 
@@ -50,49 +50,16 @@ class ExtensionInstallFile extends SiteAbstract
 
     public function install(InputInterface $input, OutputInterface $output)
     {
-        $app = Bootstrapper::getApplication($this->target_dir);
+        $wp_cli = realpath(__DIR__.'/../../../../vendor/bin/wp');
 
-        // Output buffer is used as a guard against Joomla including ._ files when searching for adapters
-        // See: http://kadin.sdf-us.org/weblog/technology/software/deleting-dot-underscore-files.html
-        ob_start();
-        
-        $installer = $app->getInstaller();
-        
         foreach ($this->extension as $package)
         {
-            $remove = false;
+            $result = `$wp_cli plugin install $package --activate --path=$this->target_dir`;
 
-            if (is_file($package))
-            {
-                $result    = \JInstallerHelper::unpack($package);
-                $directory = isset($result['dir']) ? $result['dir'] : false;
-
-                $remove = true;
+            if(preg_match('/Plugin installed successfully/i', $result)) {
+                $output->writeln("Success! Plugin <info>$package</info> Installed and Activated!");
             }
-            else $directory = $package;
-
-            if ($directory !== false)
-            {
-                $path = realpath($directory);
-
-                if (!file_exists($path)) {
-                	$output->writeln("<info>File not found: " . $directory . "</info>\n");
-                    continue;
-                }
-
-                try {
-                	$installer->install($path);
-                }
-                catch (\Exception $e) {
-                	$output->writeln("<info>Caught exception during install: " . $e->getMessage() . "</info>\n");
-                }
-
-                if ($remove) {
-                    \JFolder::delete($path);
-                }
-            }
+            else $output->writeln("Plugin <info>$package</info> cannot be installed.");
         }
-
-        ob_end_clean();
     }
 }

@@ -22,6 +22,7 @@ $application->add(new Nooku\Console\Command\SiteCreate());
 $application->add(new Nooku\Console\Command\SiteDelete());
 $application->add(new Nooku\Console\Command\ExtensionSymlink());
 $application->add(new Nooku\Console\Command\ExtensionInstall());
+$application->add(new Nooku\Console\Command\ExtensionInstallFile());
 
 /*
 $application->add(new Nooku\Console\Command\SiteToken());
