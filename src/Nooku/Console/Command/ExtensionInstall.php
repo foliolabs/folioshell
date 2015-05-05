@@ -28,7 +28,7 @@ class ExtensionInstall extends SiteAbstract
             ->addArgument(
                 'extension',
                 InputArgument::REQUIRED | InputArgument::IS_ARRAY,
-                'A list of extensions to install to the site using discover install'
+                'A list of plugins(slug) to install downloaded from the official WordPress Plugin Repo.'
             )
             ->addOption(
                 'projects-dir',
@@ -98,7 +98,7 @@ class ExtensionInstall extends SiteAbstract
         if(count($plugins))
         {
             $leftover = implode(', ', $plugins);
-            $output->writeln("Cannot find plugin/s <info>$leftover</info> from $projects_dir or at the WordPress Repostory.");
+            $output->writeln("Cannot find plugin/s <info>$leftover</info> from $projects_dir or at the WordPress Repository.");
         }
     }
 
@@ -112,11 +112,21 @@ class ExtensionInstall extends SiteAbstract
             $result = `$wp_cli plugin search $plugin --format=json --path=$this->target_dir`;
             $result = json_decode(substr($result, strpos($result, '[')));
 
-            if(is_array($result) && count($result) == 1)
+            if(is_array($result))
             {
-                $result = array_pop($result);
-                $results[$result->slug] = $result->name;
-                unset($plugins[$index]);
+                // Install only the result whose slug is equal to the plugin being installed
+                $result = array_filter($result, function($data) use($plugin){
+                    if($data->slug == $plugin) {
+                        return true;
+                    }
+                });
+
+                if(count($result) == 1)
+                {
+                    $result = array_pop($result);
+                    $results[$result->slug] = $result->name;
+                    unset($plugins[$index]);
+                }
             }
         }
 
