@@ -36,7 +36,7 @@ class ExtensionInstall extends SiteAbstract
                 InputOption::VALUE_REQUIRED,
                 'Directory where your custom projects reside',
                 sprintf('%s/Projects', trim(`echo ~`))
-            );;
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -58,38 +58,78 @@ class ExtensionInstall extends SiteAbstract
 
     public function install(InputInterface $input, OutputInterface $output)
     {
-        $wp_cli   = realpath(__DIR__.'/../../../../vendor/bin/wp');
-        $projects = array();
+        $wp_cli          = realpath(__DIR__.'/../../../../vendor/bin/wp');
+        $plugins         = array();
+        $projects_dir = $input->getOption('projects-dir');
 
         foreach($this->extension as $plugin )
         {
-            $projects[] = $plugin;
-            $projects   = array_merge($projects, $this->_getDependencies($plugin));
+            $plugins[] = $plugin;
+            $plugins   = array_merge($plugins, $this->_getDependencies($plugin));
         }
 
-        $plugins = $this->getProjectPlugins($projects, $input->getOption('projects-dir'));
+        $project_plugins   = $this->getProjectPlugins($plugins, $projects_dir);
+        $wordpress_plugins = $this->getWordPressPlugins($plugins);
 
         // Always Activate Koowa first
-        if(in_array('koowa', $plugins)) {
+        if(in_array('koowa', $project_plugins)) {
             `$wp_cli plugin activate --path=$this->target_dir koowa`;
             $output->writeln("<info>Nooku Framework</info> has been activated.");
         }
 
-        foreach($plugins as $plugin) {
-            if($plugin != 'koowa') {
+        // Install Plugins from the Projects Folder
+        foreach($project_plugins as $plugin)
+        {
+            if($plugin != 'koowa')
+            {
                 `$wp_cli plugin activate --path=$this->target_dir $plugin`;
                 $output->writeln("Plugin <info>$plugin</info> has been activated.");
             }
         }
+
+        // Install Plugins from the Projects Folder
+        foreach($wordpress_plugins as $plugin => $title)
+        {
+            $output->writeln("Installing <info>$title</info> from the WordPress Repostory.");
+            `$wp_cli plugin install $plugin --activate --path=$this->target_dir`;
+            $output->writeln("Success! Plugin <info>$title</info> Installed and Activated!");
+        }
+
+        if(count($plugins))
+        {
+            $leftover = implode(', ', $plugins);
+            $output->writeln("Cannot find plugin/s <info>$leftover</info> from $projects_dir or at the WordPress Repostory.");
+        }
     }
 
-    protected function getProjectPlugins($projects, $project_folder)
+    protected function getWordPressPlugins(&$plugins)
+    {
+        $wp_cli  = realpath(__DIR__.'/../../../../vendor/bin/wp');
+        $results = array();
+
+        foreach((array) $plugins as $index => $plugin)
+        {
+            $result = `$wp_cli plugin search $plugin --format=json --path=$this->target_dir`;
+            $result = json_decode(substr($result, strpos($result, '[')));
+
+            if(is_array($result) && count($result) == 1)
+            {
+                $result = array_pop($result);
+                $results[$result->slug] = $result->name;
+                unset($plugins[$index]);
+            }
+        }
+
+        return $results;
+    }
+
+    protected function getProjectPlugins(&$projects, $projects_dir)
     {
         $plugins = array();
 
-        foreach((array) $projects as $project)
+        foreach((array) $projects as $index => $project)
         {
-            $plugins_folder = $project_folder.'/'.$project.'/code/plugins';
+            $plugins_folder = $projects_dir.'/'.$project.'/code/plugins';
 
             if(is_dir($plugins_folder))
             {
@@ -101,6 +141,10 @@ class ExtensionInstall extends SiteAbstract
                         $plugins[] = $plugin->getFilename();
                     }
                 }
+            }
+
+            if(is_dir($projects_dir.'/'.$project)) {
+                unset($projects[$index]);
             }
         }
 
