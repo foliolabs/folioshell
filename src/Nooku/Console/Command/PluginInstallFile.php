@@ -13,21 +13,21 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use Nooku\Console\Joomla\Bootstrapper;
 
-class ExtensionInstallFile extends SiteAbstract
+class PluginInstallFile extends SiteAbstract
 {
-    protected $extension = array();
+    protected $plugin = array();
 
     protected function configure()
     {
         parent::configure();
 
         $this
-            ->setName('extension:installfile')
-            ->setDescription('Install packaged extensions for file or directory into a site')
+            ->setName('plugin:installfile')
+            ->setDescription('Install packaged plugins for file or directory into a site')
             ->addArgument(
-                'extension',
+                'plugin',
                 InputArgument::REQUIRED | InputArgument::IS_ARRAY,
-                'A list of full paths to extension packages (package file or url) to install'
+                'A list of full paths to plugin packages (package file or url) to install'
             );
     }
 
@@ -35,7 +35,7 @@ class ExtensionInstallFile extends SiteAbstract
     {
         parent::execute($input, $output);
 
-        $this->extension = $input->getArgument('extension');
+        $this->plugin = $input->getArgument('plugin');
 
         $this->check($input, $output);
         $this->install($input, $output);
@@ -52,7 +52,7 @@ class ExtensionInstallFile extends SiteAbstract
     {
         $wp_cli = realpath(__DIR__.'/../../../../vendor/bin/wp');
 
-        foreach ($this->extension as $package)
+        foreach ($this->plugin as $package)
         {
             $result = `$wp_cli plugin install $package --activate --path=$this->target_dir`;
 

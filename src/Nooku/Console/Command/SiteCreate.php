@@ -134,7 +134,7 @@ class SiteCreate extends SiteAbstract
         $this->installWordPress($input, $output);
         $this->addVirtualHost($input, $output);
         $this->symlinkProjects($input, $output);
-        $this->installExtensions($input, $output);
+        $this->installPlugins($input, $output);
 
         if ($this->version)
         {
@@ -277,26 +277,26 @@ class SiteCreate extends SiteAbstract
                 '--www'   => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
-            $symlink = new ExtensionSymlink();
+            $symlink = new PluginSymlink();
 
             $symlink->run($symlink_input, $output);
         }
     }
 
-    public function installExtensions(InputInterface $input, OutputInterface $output)
+    public function installPlugins(InputInterface $input, OutputInterface $output)
     {
         if ($this->symlink)
         {
-            $extension_input = new ArrayInput(array(
-                'extension:install',
+            $plugin_input = new ArrayInput(array(
+                'plugin:install',
                 'site'           => $input->getArgument('site'),
-                'extension'      => $this->symlink,
+                'plugin'      => $this->symlink,
                 '--www'          => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
-            $installer = new ExtensionInstall();
+            $installer = new PluginInstall();
 
-            $installer->run($extension_input, $output);
+            $installer->run($plugin_input, $output);
         }
     }
 
