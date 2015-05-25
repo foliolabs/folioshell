@@ -18,12 +18,8 @@ class Iterator extends \RecursiveIteratorIterator
      */
     public function __construct($source, $target)
     {
-        if(!is_dir($target.'/wp-content')) {
-            throw new \InvalidArgumentException('Invalid WordPress folder passed');
-        }
-
         $this->source = $source;
-        $this->target = $target.'/wp-content';
+        $this->target = $target;
 
         parent::__construct(new \RecursiveDirectoryIterator($source));
     }
