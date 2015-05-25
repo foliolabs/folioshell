@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class PluginSymlink extends SiteAbstract
+class ExtensionSymlink extends SiteAbstract
 {
     protected $symlink = array();
 
@@ -21,7 +21,7 @@ class PluginSymlink extends SiteAbstract
         parent::configure();
 
         $this
-            ->setName('plugin:symlink')
+            ->setName('extension:symlink')
             ->setDescription('Symlink projects into a site')
             ->addArgument(
                 'symlink',
@@ -79,11 +79,17 @@ class PluginSymlink extends SiteAbstract
             }
             else
             {
+                $target = $this->target_dir.'/wp-content';
+
+                if(!is_dir($target)) {
+                    throw new \InvalidArgumentException('Invalid WordPress folder '.$this->target_dir);
+                }
+
                 if (is_dir($root.'/code')) {
                     $root = $root.'/code';
                 }
 
-                $iterator = new Symlink\Iterator($root, $this->target_dir);
+                $iterator = new Symlink\Iterator($root, $target);
 
                 while ($iterator->valid()) {
                     $iterator->next();

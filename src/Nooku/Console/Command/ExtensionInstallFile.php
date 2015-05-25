@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use Nooku\Console\Joomla\Bootstrapper;
 
-class PluginInstallFile extends SiteAbstract
+class ExtensionInstallFile extends SiteAbstract
 {
     protected $plugin = array();
 
@@ -22,10 +22,10 @@ class PluginInstallFile extends SiteAbstract
         parent::configure();
 
         $this
-            ->setName('plugin:installfile')
+            ->setName('extension:installfile')
             ->setDescription('Install packaged plugins for file or directory into a site')
             ->addArgument(
-                'plugin',
+                'extension',
                 InputArgument::REQUIRED | InputArgument::IS_ARRAY,
                 'A list of full paths to plugin packages (package file or url) to install'
             );
@@ -35,7 +35,7 @@ class PluginInstallFile extends SiteAbstract
     {
         parent::execute($input, $output);
 
-        $this->plugin = $input->getArgument('plugin');
+        $this->plugin = $input->getArgument('extension');
 
         $this->check($input, $output);
         $this->install($input, $output);

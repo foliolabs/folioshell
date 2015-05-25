@@ -277,7 +277,7 @@ class SiteCreate extends SiteAbstract
                 '--www'   => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
-            $symlink = new PluginSymlink();
+            $symlink = new ExtensionSymlink();
 
             $symlink->run($symlink_input, $output);
         }
@@ -288,13 +288,13 @@ class SiteCreate extends SiteAbstract
         if ($this->symlink)
         {
             $plugin_input = new ArrayInput(array(
-                'plugin:install',
+                'extension:install',
                 'site'           => $input->getArgument('site'),
-                'plugin'      => $this->symlink,
+                'extension'      => $this->symlink,
                 '--www'          => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
-            $installer = new PluginInstall();
+            $installer = new ExtensionInstall();
 
             $installer->run($plugin_input, $output);
         }

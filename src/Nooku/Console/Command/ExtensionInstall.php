@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use Nooku\Console\Joomla\Bootstrapper;
 
-class PluginInstall extends SiteAbstract
+class ExtensionInstall extends SiteAbstract
 {
     protected $plugin = array();
 
@@ -23,10 +23,10 @@ class PluginInstall extends SiteAbstract
         parent::configure();
 
         $this
-            ->setName('plugin:install')
+            ->setName('extension:install')
             ->setDescription('Install plugins into a site')
             ->addArgument(
-                'plugin',
+                'extension',
                 InputArgument::REQUIRED | InputArgument::IS_ARRAY,
                 'A list of plugins(slug) to install downloaded from the official WordPress Plugin Repo.'
             )
@@ -43,7 +43,7 @@ class PluginInstall extends SiteAbstract
     {
         parent::execute($input, $output);
 
-        $this->plugin = $input->getArgument('plugin');
+        $this->plugin = $input->getArgument('extension');
 
         $this->check($input, $output);
         $this->install($input, $output);
