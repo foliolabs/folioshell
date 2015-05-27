@@ -13,16 +13,5 @@ if(is_file($autoload)) {
    require __DIR__.'/../../../../vendor/autoload.php';
 }
 
-use Symfony\Component\Console\Application;
-
-$application = new Application('WordPress Console Tools', '1.0');
-
-$application->add(new Nooku\Console\Command\Symlink());
-$application->add(new Nooku\Console\Command\SiteCreate());
-$application->add(new Nooku\Console\Command\SiteDelete());
-$application->add(new Nooku\Console\Command\ExtensionSymlink());
-$application->add(new Nooku\Console\Command\ExtensionInstall());
-$application->add(new Nooku\Console\Command\ExtensionInstallFile());
-$application->add(new Nooku\Console\Command\Versions());
-
+$application = new Nooku\Console\Application();
 $application->run();

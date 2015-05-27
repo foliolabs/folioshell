@@ -1,3 +1,5 @@
 /vendor/
 /bin/.files/cache/*
 !/bin/.files/cache/.gitkeep
+/plugins/*
+!/plugins/.gitkeep
