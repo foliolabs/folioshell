@@ -7,7 +7,7 @@ use Symfony\Component\Console\Output;
 class Application extends \Symfony\Component\Console\Application
 {
     /**
-     * wordpress-console version
+     * wp-console version
      *
      * @var string
      */
@@ -157,7 +157,7 @@ class Application extends \Symfony\Component\Console\Application
                         continue;
                     }
 
-                    if (isset($manifest->type) && $manifest->type == 'wordpress-console-plugin') {
+                    if (isset($manifest->type) && $manifest->type == 'wp-console-plugin') {
                         $this->_plugins[$package] = $version;
                     }
                 }

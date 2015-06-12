@@ -1,15 +1,15 @@
 {
-    "name": "nooku/wordpress-console",
+    "name": "wordplugs/wp-console",
     "type": "project",
     "license": "MPLv2",
     "description": "This command-line script helps to ease the management of WordPress sites in your development environment.",
     "keywords": ["wordpress", "wp", "console", "tools"],
-    "homepage": "https://github.com/nooku/wordpress-console",
+    "homepage": "https://github.com/wordplugs/wp-console",
     "authors": [
         {
-            "name": "Nooku",
-            "email": "info@nooku.org",
-            "homepage": "https://www.nooku.org"
+            "name": "Wordplugs",
+            "email": "info@timble.net",
+            "homepage": "https://www.wordplugs.com/"
         }
     ],
     "require": {

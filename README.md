@@ -1,7 +1,7 @@
 WordPress Command Line Tools
 =========================
 
-This is a script developed by [Nooku Team](http://nooku.org) to ease the management of WordPress sites.
+This is a script developed by [Wordplugs Team](http://wordplugs.com) to ease the management of WordPress sites.
 
 It is designed to work on Linux and MacOS. Windows users can use it in [Nooku Vagrant box](https://github.com/nooku/nooku-vagrant)
 
@@ -12,20 +12,20 @@ Installation
 
 1. Make the `wordpress` command executable:
 
-    `$ chmod u+x /path/to/wordpress-console/bin/wordpress`
+    `$ chmod u+x /path/to/wp-console/bin/wordpress`
 
 1. Configure your system to recognize where the executable resides. There are 3 options:
     1. Create a symbolic link in a directory that is already in your PATH, e.g.:
 
-        `$ ln -s /path/to/wordpress-console/bin/wordpress /usr/bin/wordpress`
+        `$ ln -s /path/to/wp-console/bin/wordpress /usr/bin/wordpress`
 
     1. Explicitly add the executable to the PATH variable which is defined in the the shell configuration file called .profile, .bash_profile, .bash_aliases, or .bashrc that is located in your home folder, i.e.:
 
-        `export PATH="$PATH:/path/to/wordpress-console/bin:/usr/local/bin"`
+        `export PATH="$PATH:/path/to/wp-console/bin:/usr/local/bin"`
 
     1. Add an alias for the executable by adding this to you shell configuration file (see list in previous option):
 
-        `$ alias wordpress=/path/to/wordpress-console/bin/wordpress`
+        `$ alias wordpress=/path/to/wp-console/bin/wordpress`
 
     For options 2 and 3 above, you should log out and then back in to apply your changes to your current session.
 
@@ -33,7 +33,7 @@ Installation
 
     `$ which wordpress`
 
-1. From wordpress-console root (/path/to/wordpress-console), run Composer to fetch dependencies.
+1. From wp-console root (/path/to/wp-console), run Composer to fetch dependencies.
 
     `$ composer install`
 
@@ -142,8 +142,8 @@ Fork the project, create a feature branch, and send us a pull request.
 
 ## Authors
 
-See the list of [contributors](https://github.com/nooku/wordpress-console/contributors).
+See the list of [contributors](https://github.com/wordplugs/wp-console/contributors).
 
 ## License
 
-The `nooku/wordpress-console` plugin is licensed under the MPL v2 license - see the LICENSE file for details.
+The `wordplugs/wp-console` plugin is licensed under the MPL v2 license - see the LICENSE file for details.

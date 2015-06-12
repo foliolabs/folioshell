@@ -2,7 +2,7 @@
 /**
  * @copyright   Copyright (C) 2007 - 2014 Johan Janssens and Timble CVBA. (http://www.timble.net)
  * @license     Mozilla Public License, version 2.0
- * @link        http://github.com/nooku/wordpress-console for the canonical source repository
+ * @link        http://github.com/wordplugs/wp-console for the canonical source repository
  */
 
 namespace Nooku\Console\Command;
@@ -71,7 +71,7 @@ class PluginInstall extends Command
             }
         }
 
-        if ($type != 'wordpress-console-plugin')
+        if ($type != 'wp-console-plugin')
         {
             $output->writeln("<comment>$package is not a WordPress console plugin</comment>");
             $output->writeln('<error>Plugin not installed</error>');
