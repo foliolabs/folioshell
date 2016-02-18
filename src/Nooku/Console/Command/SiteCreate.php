@@ -96,6 +96,13 @@ class SiteCreate extends SiteAbstract
                 sprintf('%s/Projects', trim(`echo ~`))
             )
             ->addOption(
+                'http-port',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The HTTP port the virtual host should listen to',
+                8080
+            )
+            ->addOption(
                 'disable-ssl',
                 null,
                 InputOption::VALUE_NONE,
@@ -270,7 +277,7 @@ class SiteCreate extends SiteAbstract
 
             $template = file_get_contents(self::$files.'/vhost.conf');
 
-            file_put_contents($tmp, sprintf($template, $this->site));
+            file_put_contents($tmp, sprintf($template, $this->site, $this->target_dir, $input->getOption('http-port')));
 
             if (!$input->getOption('disable-ssl'))
             {
@@ -281,7 +288,7 @@ class SiteCreate extends SiteAbstract
                 if (file_exists($ssl_crt) && file_exists($ssl_key))
                 {
                     $template = "\n\n" . file_get_contents(self::$files . '/vhost.ssl.conf');
-                    file_put_contents($tmp, sprintf($template, $ssl_port, $this->site, $ssl_crt, $ssl_key), FILE_APPEND);
+                    file_put_contents($tmp, sprintf($template, $this->site, $this->target_dir, $ssl_port, $ssl_crt, $ssl_key), FILE_APPEND);
                 }
                 else $output->writeln('<comment>SSL was not enabled for the site. One or more certificate files are missing.</comment>');
             }
