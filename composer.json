@@ -14,7 +14,7 @@
     ],
     "require": {
         "symfony/console": "2.4.*",
-        "wp-cli/wp-cli"  : "0.19.*"
+        "wp-cli/wp-cli"  : "*"
     },
     "autoload": {
         "psr-0": {"Nooku\\": "src/"}
