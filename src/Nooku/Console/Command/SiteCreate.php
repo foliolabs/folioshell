@@ -377,7 +377,13 @@ class SiteCreate extends SiteAbstract
         }
 
         $output->writeln("<info>Downloading WordPress $this->version - this could take a few minutes...</info>");
-        $bytes = file_put_contents($cache, fopen($url, 'r'));
+        $bytes = file_put_contents($cache, fopen($url, 'r', false, stream_context_create(array(
+            "ssl" => array(
+                "verify_peer"      => false,
+                "verify_peer_name" => false,
+            ),
+        ))));
+
         if ($bytes === false || $bytes == 0) {
             throw new \RuntimeException(sprintf('Failed to download %s', $url));
         }
