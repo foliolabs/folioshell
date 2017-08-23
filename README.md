@@ -10,36 +10,36 @@ Installation
 
 1. Download or clone this repository.
 
-1. Make the `wordpress` command executable:
+1. Make the `folioshell` command executable:
 
-    `$ chmod u+x /path/to/wp-console/bin/wordpress`
+    `$ chmod u+x /path/to/folioshell/bin/folioshell`
 
 1. Configure your system to recognize where the executable resides. There are 3 options:
     1. Create a symbolic link in a directory that is already in your PATH, e.g.:
 
-        `$ ln -s /path/to/wp-console/bin/wordpress /usr/bin/wordpress`
+        `$ ln -s /path/to/folioshell/bin/folioshell /usr/bin/folioshell`
 
     1. Explicitly add the executable to the PATH variable which is defined in the the shell configuration file called .profile, .bash_profile, .bash_aliases, or .bashrc that is located in your home folder, i.e.:
 
-        `export PATH="$PATH:/path/to/wp-console/bin:/usr/local/bin"`
+        `export PATH="$PATH:/path/to/folioshell/bin:/usr/local/bin"`
 
     1. Add an alias for the executable by adding this to you shell configuration file (see list in previous option):
 
-        `$ alias wordpress=/path/to/wp-console/bin/wordpress`
+        `$ alias folioshell=/path/to/folioshell/bin/folioshell`
 
     For options 2 and 3 above, you should log out and then back in to apply your changes to your current session.
 
-1. Test that wordpress executable is found by your system:
+1. Test that `folioshell` executable is found by your system:
 
-    `$ which wordpress`
+    `$ which folioshell`
 
-1. From wp-console root (/path/to/wp-console), run Composer to fetch dependencies.
+1. From `folioshell` root (`/path/to/folioshell`), run Composer to fetch dependencies.
 
     `$ composer install`
 
 For available options, try running:
 
-    wordpress --list
+    folioshell --list
     
 Usage 
 -----
@@ -48,7 +48,7 @@ Usage
 
 To create a site with the latest WordPress version, run:
 
-    wordpress site:create testsite
+    folioshell site:create testsite
 
 The newly installed site will be available at /var/www/testsite and testsite.dev after that. You can login into your fresh WordPress installation using these credentials: `admin` / `admin`.
 
@@ -56,23 +56,23 @@ By default the web server root is set to _/var/www_. You can pass _--www=/my/ser
 
 You can choose the WordPress version to be installed:
 
-    wordpress site:create testsite --wordpress=4.2
+    folioshell site:create testsite --wordpress=4.2
 
 You can pick any branch from the Git repository (e.g. master, staging) using this command.
 
 You can also add your projects into the new site by symlinking. See the Symlinking section below for detailed information.
 
-    wordpress site:create testsite --symlink=project1,project2
+    folioshell site:create testsite --symlink=project1,project2
 
 For more information and available options, try running:
 
-    wordpress site:create --help
+    folioshell site:create --help
 
 ### Delete Sites
 
 You can delete the sites you have created by running:
 
-    wordpress site:delete testsite
+    folioshell site:delete testsite
 
 ### Symlink Plugins
 
@@ -84,11 +84,11 @@ Please note that your source code should resemble the WordPress `wp-content` fol
 
 Now to create a new site, execute the site:create command and add a symlink option:
 
-	wordpress site:create testsite --symlink=projectname
+	folioshell site:create testsite --symlink=projectname
 
 Or to symlink your code into an existing site:
 
-	wordpress extension:symlink testsite projectname
+	folioshell extension:symlink testsite projectname
 
 This will symlink all the folders from the _projectname_ folder into _testsite.dev_.
 
@@ -96,27 +96,27 @@ Run discover install to make your component available to WordPress and you are g
 
 For more information on the symlinker, run:
 
-	wordpress extension:symlink  --help
+	folioshell extension:symlink  --help
 
 ### Install Plugins
 
 You can install plugins from WordPress's Official Plugin Repository on command line to install plugins.
 
-	wordpress extension:install testsite pluginslug
+	folioshell extension:install testsite pluginslug
 
 You need to use the unique slug of the plugin.
 
 For more information, run:
 
-	wordpress extension:install --help
+	folioshell extension:install --help
 	  
 Alternatively, you can install plugins using packages or url using the `extension:installfile` command. Example:
 
-    wordpress extension:installfile testsite /home/vagrant/pluginone.v1.x.zip /home/vagrant/plugintwo.v2.x.tar.gz
+    folioshell extension:installfile testsite /home/vagrant/pluginone.v1.x.zip /home/vagrant/plugintwo.v2.x.tar.gz
 
 And as URL
 
-    wordpress extension:installfile testsite http://url.com/to/pluginone.v1.x.zip http://url.com/to/plugintwo.v2.x.tar.gz
+    folioshell extension:installfile testsite http://url.com/to/pluginone.v1.x.zip http://url.com/to/plugintwo.v2.x.tar.gz
     
 This will install both the pluginone.v1.x.zip and plugintwo.v2.x.tar.gz packages.
 
@@ -128,8 +128,8 @@ This will install both the pluginone.v1.x.zip and plugintwo.v2.x.tar.gz packages
 
 There a few other commands available for you to try out as well :
 
-* `wordpress versions` : list the available WordPress versions. 
- * Use `wordpress versions --refresh` to get the latest tags and branches from the official [WordPress](https://github.com/WordPress/WordPress) repository.
+* `folioshell versions` : list the available WordPress versions. 
+ * Use `folioshell versions --refresh` to get the latest tags and branches from the official [WordPress](https://github.com/WordPress/WordPress) repository.
  * To purge the cache of all WordPress packages, add the `--clear-cache` flag to this command.
 
 ## Requirements
