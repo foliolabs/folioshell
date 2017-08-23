@@ -1,7 +1,7 @@
-WordPress Command Line Tools
+FolioShell - WordPress Command Line Tools
 =========================
 
-This is a script developed by [Wordplugs Team](http://wordplugs.com) to ease the management of WordPress sites.
+This is a script developed by [Foliolabs Team](https://foliolabs.com) to ease the management of WordPress sites.
 
 It is designed to work on Linux and MacOS. Windows users can use it in [Nooku Vagrant box](https://github.com/nooku/nooku-vagrant)
 
@@ -142,8 +142,8 @@ Fork the project, create a feature branch, and send us a pull request.
 
 ## Authors
 
-See the list of [contributors](https://github.com/wordplugs/wp-console/contributors).
+See the list of [contributors](https://github.com/foliolabs/folioshell/contributors).
 
 ## License
 
-The `wordplugs/wp-console` plugin is licensed under the MPL v2 license - see the LICENSE file for details.
+The `foliolabs/folioshell` repository is licensed under the MPL v2 license - see the LICENSE file for details.

@@ -1,15 +1,15 @@
 {
-    "name": "wordplugs/wp-console",
+    "name": "foliolabs/folioshell",
     "type": "project",
     "license": "MPLv2",
     "description": "This command-line script helps to ease the management of WordPress sites in your development environment.",
     "keywords": ["wordpress", "wp", "console", "tools"],
-    "homepage": "https://github.com/wordplugs/wp-console",
+    "homepage": "https://github.com/foliolabs/folioshell",
     "authors": [
         {
-            "name": "Wordplugs",
-            "email": "info@timble.net",
-            "homepage": "https://www.wordplugs.com/"
+            "name": "Foliolabs",
+            "email": "info@foliolabs.com",
+            "homepage": "https://www.foliolabs.com/"
         }
     ],
     "require": {
@@ -17,7 +17,7 @@
         "wp-cli/wp-cli"  : "*"
     },
     "autoload": {
-        "psr-0": {"Nooku\\": "src/"}
+        "psr-0": {"Folioshell\\": "src/"}
     },
-    "bin": ["bin/wordpress"]
+    "bin": ["bin/folioshell"]
 }

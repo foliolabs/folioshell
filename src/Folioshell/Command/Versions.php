@@ -1,11 +1,11 @@
 <?php
 /**
- * @copyright	Copyright (C) 2007 - 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
+ * @copyright	Copyright (C) 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
  * @license		Mozilla Public License, version 2.0
- * @link		http://github.com/wordplugs/wp-console for the canonical source repository
+ * @link		https://github.com/foliolabs/folioshell for the canonical source repository
  */
 
-namespace Nooku\Console\Command;
+namespace Folioshell\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

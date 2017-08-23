@@ -1,20 +1,24 @@
 <?php
 /**
- * @copyright	Copyright (C) 2007 - 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
+ * @copyright	Copyright (C) 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
  * @license		Mozilla Public License, version 2.0
- * @link		http://github.com/wordplugs/wp-console for the canonical source repository
+ * @link		http://github.com/foliolabs/folioshell for the canonical source repository
  */
 
-namespace Nooku\Console\Command\Symlink;
+namespace Folioshell\Command\Extension\Iterator;
+
+use Symfony\Component\Console\Output\OutputInterface;
 
 class Iterator extends \RecursiveIteratorIterator
 {
     protected $source;
     protected $target;
 
+    protected $_output;
+
     /**
      * @param string $source Source dir (usually from an IDE workspace)
-     * @param string $target Target dir (usually where a wordpress installation resides)
+     * @param string $target Target dir (usually where a joomla installation resides)
      */
     public function __construct($source, $target)
     {
@@ -34,7 +38,9 @@ class Iterator extends \RecursiveIteratorIterator
         $source = $this->key();
 
         $target = str_replace($this->source, '', $source);
-        $target = $this->target.$target;
+        $target = str_replace('/site', '', $target);
+        $target = trim(str_replace($this->target, '', $target), '/');
+        $target = rtrim($this->target, '/').'/'.$target;
 
         if (is_link($target)) {
             unlink($target);
@@ -51,8 +57,18 @@ class Iterator extends \RecursiveIteratorIterator
 
     public function createLink($source, $target)
     {
-        if (!file_exists($target)) {
+        if (!file_exists($target))
+        {
+            if (!is_null($this->_output) && $this->_output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
+                $this->_output->writeln(" * creating link: `$target` -> `$source`");
+            }
+
             `ln -sf $source $target`;
         }
+    }
+
+    public function setOutput(OutputInterface $output)
+    {
+        $this->_output = $output;
     }
 }

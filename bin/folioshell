@@ -1,9 +1,9 @@
 #!/usr/bin/env php
 <?php
 /**
- * @copyright	Copyright (C) 2007 - 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
+ * @copyright	Copyright (C) 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
  * @license		Mozilla Public License, version 2.0
- * @link		http://github.com/wordplugs/wp-console for the canonical source repository
+ * @link		https://github.com/foliolabs/folioshell for the canonical source repository
  */
 
 $autoload = __DIR__.'/../vendor/autoload.php';
@@ -13,5 +13,5 @@ if(is_file($autoload)) {
    require __DIR__.'/../../../../vendor/autoload.php';
 }
 
-$application = new Nooku\Console\Application();
+$application = new Folioshell\Application();
 $application->run();

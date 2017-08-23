@@ -1,5 +1,5 @@
 <?php
-namespace Nooku\Console;
+namespace Folioshell;
 
 use Symfony\Component\Console\Input;
 use Symfony\Component\Console\Output;
@@ -18,7 +18,7 @@ class Application extends \Symfony\Component\Console\Application
      *
      * @var string
      */
-    const NAME = 'WordPress Console tools';
+    const NAME = 'FolioShell - WordPress Console tools';
 
     /**
      * The path to the plugin directory
@@ -58,8 +58,8 @@ class Application extends \Symfony\Component\Console\Application
     /**
      * Runs the current application.
      *
-     * @param InputInterface  $input  An Input instance
-     * @param OutputInterface $output An Output instance
+     * @param Input\InputInterface  $input  An Input instance
+     * @param Output\OutputInterface $output An Output instance
      *
      * @return int 0 if everything went fine, or an error code
      *
@@ -79,7 +79,7 @@ class Application extends \Symfony\Component\Console\Application
 
         $this->_loadPlugins();
 
-        parent::run($this->_input, $this->_output);
+        return parent::run($this->_input, $this->_output);
     }
 
     /**
@@ -96,7 +96,7 @@ class Application extends \Symfony\Component\Console\Application
     /**
      * Gets the default commands that should always be available.
      *
-     * @return Command[] An array of default Command instances
+     * @return \Symfony\Component\Console\Command\Command[] An array of default Command instances
      */
     protected function getDefaultCommands()
     {
@@ -106,7 +106,9 @@ class Application extends \Symfony\Component\Console\Application
             new Command\Symlink(),
             new Command\SiteCreate(),
             new Command\SiteDelete(),
-            new Command\ExtensionSymlink(),
+
+            new Command\Extension\Symlink(),
+
             new Command\ExtensionInstall(),
             new Command\ExtensionInstallFile(),
             new Command\Versions()
