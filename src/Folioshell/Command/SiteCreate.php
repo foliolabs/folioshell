@@ -55,15 +55,20 @@ class SiteCreate extends SiteAbstract
     protected $versions;
 
     /**
+     * WP_CLI executable path
      *
+     * @var string
      */
+    protected $wp;
 
     protected function configure()
     {
         parent::configure();
 
+        $this->wp  = realpath(__DIR__.'/../../../vendor/bin/wp');
+
         if (!self::$files) {
-            self::$files = realpath(__DIR__.'/../../../../bin/.files');
+            self::$files = realpath(__DIR__.'/../../../bin/.files');
         }
 
         $this
@@ -136,14 +141,6 @@ class SiteCreate extends SiteAbstract
     {
         parent::execute($input, $output);
 
-        $this->versions = new Versions();
-
-        if ($input->getOption('clear-cache')) {
-            $this->versions->refresh();
-        }
-
-        $this->setVersion($input->getOption('wordpress'));
-
         $this->symlink = $input->getOption('symlink');
         if (is_string($this->symlink)) {
             $this->symlink = explode(',', $this->symlink);
@@ -152,19 +149,16 @@ class SiteCreate extends SiteAbstract
         $this->check($input, $output);
         $this->createFolder($input, $output);
         $this->createDatabase($input, $output);
-        $this->modifyConfiguration();
+        $this->modifyConfiguration($input, $output);
         $this->installWordPress($input, $output);
         $this->addVirtualHost($input, $output);
         $this->symlinkProjects($input, $output);
         $this->installExtensions($input, $output);
 
-        if ($this->version)
-        {
-            $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
-            $output->writeln("It was installed using the domain name <info>$this->site.dev</info>.");
-            $output->writeln("Don't forget to add <info>$this->site.dev</info> to your <info>/etc/hosts</info>");
-            $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
-        }
+        $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
+        $output->writeln("It was installed using the domain name <info>$this->site.dev</info>.");
+        $output->writeln("Don't forget to add <info>$this->site.dev</info> to your <info>/etc/hosts</info>");
+        $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
     }
 
     public function check(InputInterface $input, OutputInterface $output)
@@ -173,46 +167,28 @@ class SiteCreate extends SiteAbstract
             throw new \RuntimeException(sprintf('A site with name %s already exists', $this->site));
         }
 
-        if ($this->version)
-        {
-            $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-            $result = exec(sprintf(
-                    "echo 'SHOW DATABASES LIKE \"%s\"' | mysql -u'%s' %s",
-                    $this->target_db, $this->mysql->user, $password
-                )
-            );
+        $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
+        $result = exec(sprintf(
+                "echo 'SHOW DATABASES LIKE \"%s\"' | mysql -u'%s' %s",
+                $this->target_db, $this->mysql->user, $password
+            )
+        );
 
-            if (!empty($result)) { // Table exists
-                throw new \RuntimeException(sprintf('A database with name %s already exists', $this->target_db));
-            }
-
-            $this->source_tarball = $this->getTarball($this->version, $output);
-            if(!file_exists($this->source_tarball)) {
-                throw new \RuntimeException(sprintf('File %s does not exist', $this->source_tarball));
-            }
+        if (!empty($result)) { // Table exists
+            throw new \RuntimeException(sprintf('A database with name %s already exists', $this->target_db));
         }
     }
 
     public function createFolder(InputInterface $input, OutputInterface $output)
     {
+        $version = $input->getOption('wordpress');
+
         `mkdir -p $this->target_dir`;
-
-        if ($this->version)
-        {
-            `cd $this->target_dir; tar xzf $this->source_tarball --strip 1`;
-
-            if ($this->versions->isBranch($this->version)) {
-                unlink($this->source_tarball);
-            }
-        }
+        `{$this->wp} core download --path=$this->target_dir --version=$version`;
     }
 
-    public function createDatabase()
+    public function createDatabase(InputInterface $input, OutputInterface $output)
     {
-        if (!$this->version) {
-            return;
-        }
-
         $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
         $result = exec(
             sprintf(
@@ -222,51 +198,15 @@ class SiteCreate extends SiteAbstract
         );
     }
 
-    public function installWordPress()
+    public function modifyConfiguration(InputInterface $input, OutputInterface $output)
     {
-        $wp_cli = realpath(__DIR__.'/../../../../vendor/bin/wp');
-        `$wp_cli core install --url=$this->site.dev --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev`;
+        `{$this->wp} config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password} --extra-php="define( 'WP_DEBUG', true ); define( 'WP_DEBUG_LOG', true );"`;
     }
 
-    public function modifyConfiguration()
+    public function installWordPress(InputInterface $input, OutputInterface $output)
     {
-        if (!$this->version) {
-            return;
-        }
-
-        $source   = $this->target_dir.'/wp-config-sample.php';
-        $target   = $this->target_dir.'/wp-config.php';
-
-        $contents = file_get_contents($source);
-
-        $random   = function($length = 50) {
-            $charset ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
-            $string  = '';
-            $count   = strlen($charset);
-
-            while ($length--) {
-                $string .= $charset[mt_rand(0, $count-1)];
-            }
-
-            return $string;
-        };
-
-        $replacements = array(
-            'database_name_here'           => $this->target_db,
-            'username_here'                => $this->mysql->user,
-            'password_here'                => $this->mysql->password,
-            'define(\'WP_DEBUG\', false);' => 'define(\'WP_DEBUG\', true);'."\n".'define(\'WP_USE_EXT_MYSQL\', false);',
-            'put your unique phrase here'  => $random()
-        );
-
-        foreach($replacements as $key => $value) {
-            $contents = str_replace($key, $value, $contents);
-        }
-
-        file_put_contents($target, $contents);
-        chmod($target, 0644);
-
-        `rm $source`;
+        `{$this->wp} core install --url=$this->site.dev --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev`;
+        `{$this->wp} user update admin --role=administrator --path=$this->target_dir`;
     }
 
     public function addVirtualHost(InputInterface $input, OutputInterface $output)
@@ -306,13 +246,13 @@ class SiteCreate extends SiteAbstract
         if ($this->symlink)
         {
             $symlink_input = new ArrayInput(array(
-                'site:symlink',
+                'extension:symlink',
                 'site'    => $input->getArgument('site'),
                 'symlink' => $this->symlink,
                 '--www'   => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
-            $symlink = new ExtensionSymlink();
+            $symlink = new Extension\Symlink();
 
             $symlink->run($symlink_input, $output);
         }
@@ -333,61 +273,5 @@ class SiteCreate extends SiteAbstract
 
             $installer->run($plugin_input, $output);
         }
-    }
-
-    public function setVersion($version)
-    {
-        $result = $version;
-
-        if (strtolower($version) === 'latest') {
-            $result = $this->versions->getLatestRelease();
-        }
-        else
-        {
-            $length = strlen($version);
-            $format = is_numeric($version) || preg_match('/^\d\.\d+$/im', $version);
-
-            if ( ($length == 1 || $length == 3) && $format)
-            {
-                $result = $this->versions->getLatestRelease($version);
-
-                if($result == '0.0.0') {
-                    $result = $version.($length == 1 ? '.0.0' : '.0');
-                }
-            }
-        }
-
-        $this->version = $result;
-    }
-
-    public function getTarball($version, OutputInterface $output)
-    {
-        $tar   = $this->version.'.tar.gz';
-        $cache = self::$files.'/cache/'.$tar;
-
-        if(file_exists($cache) && !$this->versions->isBranch($this->version)) {
-            return $cache;
-        }
-
-        if ($this->versions->isBranch($version)) {
-            $url = 'http://github.com/WordPress/WordPress/tarball/'.$version;
-        }
-        else {
-            $url = 'https://github.com/WordPress/WordPress/archive/'.$version.'.tar.gz';
-        }
-
-        $output->writeln("<info>Downloading WordPress $this->version - this could take a few minutes...</info>");
-        $bytes = file_put_contents($cache, fopen($url, 'r', false, stream_context_create(array(
-            "ssl" => array(
-                "verify_peer"      => false,
-                "verify_peer_name" => false,
-            ),
-        ))));
-
-        if ($bytes === false || $bytes == 0) {
-            throw new \RuntimeException(sprintf('Failed to download %s', $url));
-        }
-
-        return $cache;
     }
 }
