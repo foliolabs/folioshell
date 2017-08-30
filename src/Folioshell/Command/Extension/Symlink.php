@@ -34,6 +34,14 @@ class Symlink extends SiteAbstract
         array_unshift(static::$_symlinkers, $symlinker);
     }
 
+    /**
+     * @return array
+     */
+    public function getProjects()
+    {
+        return $this->projects;
+    }
+
     protected function configure()
     {
         parent::configure();

@@ -78,7 +78,7 @@ class ExtensionInstall extends SiteAbstract
         // Install Plugins from the Projects Folder
         foreach($this->plugin as $plugin)
         {
-            if($plugin != 'foliokit')
+            if(!in_array($plugin, ['foliokit', 'kodekit']))
             {
                 `$wp_cli plugin activate --path=$this->target_dir $plugin`;
                 $output->writeln("Plugin <info>$plugin</info> has been activated.");

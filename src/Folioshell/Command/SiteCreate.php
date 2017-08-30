@@ -255,17 +255,19 @@ class SiteCreate extends SiteAbstract
             $symlink = new Extension\Symlink();
 
             $symlink->run($symlink_input, $output);
+
+            $this->symlinked_projects = $symlink->getProjects();
         }
     }
 
     public function installExtensions(InputInterface $input, OutputInterface $output)
     {
-        if ($this->symlink)
+        if ($this->symlinked_projects)
         {
             $plugin_input = new ArrayInput(array(
                 'extension:install',
                 'site'           => $input->getArgument('site'),
-                'extension'      => $this->symlink,
+                'extension'      => $this->symlinked_projects,
                 '--www'          => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
