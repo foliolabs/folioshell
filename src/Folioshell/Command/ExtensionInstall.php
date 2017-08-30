@@ -56,29 +56,29 @@ class ExtensionInstall extends SiteAbstract
 
     public function install(InputInterface $input, OutputInterface $output)
     {
-        $wp_cli          = realpath(__DIR__.'/../../../../vendor/bin/wp');
+        $wp_cli          = realpath(__DIR__.'/../../../vendor/bin/wp');
         $plugins         = array();
         $projects_dir = $input->getOption('projects-dir');
 
-        foreach($this->plugin as $plugin )
+        /*foreach($this->plugin as $plugin )
         {
             $plugins[] = $plugin;
-            $plugins   = array_merge($plugins, $this->_getDependencies($plugin));
+            //$plugins   = array_merge($plugins, $this->_getDependencies($plugin));
         }
 
         $project_plugins   = $this->getProjectPlugins($plugins, $projects_dir);
-        $wordpress_plugins = $this->getWordPressPlugins($plugins);
+        $wordpress_plugins = $this->getWordPressPlugins($plugins);*/
 
         // Always Activate Koowa first
-        if(in_array('koowa', $project_plugins)) {
-            `$wp_cli plugin activate --path=$this->target_dir koowa`;
-            $output->writeln("<info>Nooku Framework</info> has been activated.");
+        if(in_array('foliokit', $this->plugin)) {
+            `$wp_cli plugin activate --path=$this->target_dir foliokit`;
+            $output->writeln("<info>FolioKit</info> has been activated.");
         }
 
         // Install Plugins from the Projects Folder
-        foreach($project_plugins as $plugin)
+        foreach($this->plugin as $plugin)
         {
-            if($plugin != 'koowa')
+            if($plugin != 'foliokit')
             {
                 `$wp_cli plugin activate --path=$this->target_dir $plugin`;
                 $output->writeln("Plugin <info>$plugin</info> has been activated.");
@@ -86,7 +86,7 @@ class ExtensionInstall extends SiteAbstract
         }
 
         // Install Plugins from the Projects Folder
-        foreach($wordpress_plugins as $plugin => $title)
+        /*foreach($wordpress_plugins as $plugin => $title)
         {
             $output->writeln("Installing <info>$title</info> from the WordPress Repostory.");
             `$wp_cli plugin install $plugin --activate --path=$this->target_dir`;
@@ -97,7 +97,7 @@ class ExtensionInstall extends SiteAbstract
         {
             $leftover = implode(', ', $plugins);
             $output->writeln("Cannot find plugin/s <info>$leftover</info> from $projects_dir or at the WordPress Repository.");
-        }
+        }*/
     }
 
     protected function getWordPressPlugins(&$plugins)
@@ -137,22 +137,19 @@ class ExtensionInstall extends SiteAbstract
 
         foreach((array) $projects as $index => $project)
         {
-            $plugins_folder = $projects_dir.'/'.$project.'/code/plugins';
+            $plugins_folder = $projects_dir.'/'.$project;
 
             if(is_dir($plugins_folder))
             {
-                $dir = new \RecursiveDirectoryIterator($plugins_folder);
-
-                foreach($dir as $plugin)
-                {
-                    if($plugin->isDir() && is_file($plugin.'/'.$plugin->getFilename().'.php')) {
-                        $plugins[] = $plugin->getFilename();
-                    }
+                if(is_dir($plugins_folder.'/code')) {
+                    $plugins_folder .= '/code';
                 }
-            }
 
-            if(is_dir($projects_dir.'/'.$project)) {
-                unset($projects[$index]);
+                if (is_file($plugins_folder.'/'.$project.'.php')) {
+                    $plugins[] = $project;
+
+                    unset($projects[$index]);
+                }
             }
         }
 
