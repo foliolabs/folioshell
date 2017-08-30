@@ -50,11 +50,6 @@ class SiteCreate extends SiteAbstract
     protected $symlink = array();
 
     /**
-     * @var Versions
-     */
-    protected $versions;
-
-    /**
      * WP_CLI executable path
      *
      * @var string
@@ -64,8 +59,6 @@ class SiteCreate extends SiteAbstract
     protected function configure()
     {
         parent::configure();
-
-        $this->wp  = realpath(__DIR__.'/../../../vendor/bin/wp');
 
         if (!self::$files) {
             self::$files = realpath(__DIR__.'/../../../bin/.files');
@@ -184,13 +177,13 @@ class SiteCreate extends SiteAbstract
         $version = $input->getOption('wordpress');
 
         `mkdir -p $this->target_dir`;
-        `{$this->wp} core download --path=$this->target_dir --version=$version`;
+        $output->writeln(WP::call("core download --path=$this->target_dir --version=$version"));
     }
 
     public function createDatabase(InputInterface $input, OutputInterface $output)
     {
         $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-        $result = exec(
+        exec(
             sprintf(
                 "echo 'CREATE DATABASE `%s` CHARACTER SET utf8' | mysql -u'%s' %s",
                 $this->target_db, $this->mysql->user, $password
@@ -200,13 +193,13 @@ class SiteCreate extends SiteAbstract
 
     public function modifyConfiguration(InputInterface $input, OutputInterface $output)
     {
-        `{$this->wp} config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password} --extra-php="define( 'WP_DEBUG', true ); define( 'WP_DEBUG_LOG', true );"`;
+        $output->writeln(WP::call("config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password} --extra-php=\"define( 'WP_DEBUG', true ); define( 'WP_DEBUG_LOG', true );\""));
     }
 
     public function installWordPress(InputInterface $input, OutputInterface $output)
     {
-        `{$this->wp} core install --url=$this->site.dev --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev`;
-        `{$this->wp} user update admin --role=administrator --path=$this->target_dir`;
+        $output->writeln(WP::call("core install --url=$this->site.dev --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev"));
+        $output->writeln(WP::call("user update admin --role=administrator --path=$this->target_dir"));
     }
 
     public function addVirtualHost(InputInterface $input, OutputInterface $output)
@@ -271,7 +264,7 @@ class SiteCreate extends SiteAbstract
                 '--www'          => $this->www,
                 '--projects-dir' => $input->getOption('projects-dir')
             ));
-            $installer = new ExtensionInstall();
+            $installer = new Extension\Install();
 
             $installer->run($plugin_input, $output);
         }

@@ -5,13 +5,15 @@
  * @link		https://github.com/foliolabs/folioshell for the canonical source repository
  */
 
-namespace Folioshell\Command;
+namespace Folioshell\Command\Extension;
 
+use Folioshell\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ExtensionInstallFile extends SiteAbstract
+class Install extends Command\SiteAbstract
 {
     protected $plugin = array();
 
@@ -20,12 +22,19 @@ class ExtensionInstallFile extends SiteAbstract
         parent::configure();
 
         $this
-            ->setName('extension:installfile')
-            ->setDescription('Install packaged plugins for file or directory into a site')
+            ->setName('extension:install')
+            ->setDescription('Install plugins into a site')
             ->addArgument(
                 'extension',
                 InputArgument::REQUIRED | InputArgument::IS_ARRAY,
-                'A list of full paths to plugin packages (package file or url) to install'
+                'A list of plugins(slug) to install downloaded from the official WordPress Plugin Repo.'
+            )
+            ->addOption(
+                'projects-dir',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Directory where your custom projects reside',
+                sprintf('%s/Projects', trim(`echo ~`))
             );
     }
 
@@ -48,16 +57,20 @@ class ExtensionInstallFile extends SiteAbstract
 
     public function install(InputInterface $input, OutputInterface $output)
     {
-        $wp_cli = realpath(__DIR__.'/../../../../vendor/bin/wp');
+        // Always Activate Koowa first
+        if(in_array('foliokit', $this->plugin)) {
+            $output->writeln(Command\Wp::call("plugin activate --path=$this->target_dir foliokit"));
+            $output->writeln("<info>FolioKit</info> has been activated.");
+        }
 
-        foreach ($this->plugin as $package)
+        // Install Plugins from the Projects Folder
+        foreach($this->plugin as $plugin)
         {
-            $result = `$wp_cli plugin install $package --activate --path=$this->target_dir`;
-
-            if(preg_match('/Plugin installed successfully/i', $result)) {
-                $output->writeln("Success! Plugin <info>$package</info> Installed and Activated!");
+            if(!in_array($plugin, ['foliokit', 'kodekit']))
+            {
+                $output->writeln(Command\Wp::call("plugin activate --path=$this->target_dir $plugin"));
+                $output->writeln("Plugin <info>$plugin</info> has been activated.");
             }
-            else $output->writeln("Plugin <info>$package</info> cannot be installed.");
         }
     }
 }
