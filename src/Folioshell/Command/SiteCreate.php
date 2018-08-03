@@ -149,8 +149,8 @@ class SiteCreate extends SiteAbstract
         $this->installExtensions($input, $output);
 
         $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
-        $output->writeln("It was installed using the domain name <info>$this->site.dev</info>.");
-        $output->writeln("Don't forget to add <info>$this->site.dev</info> to your <info>/etc/hosts</info>");
+        $output->writeln("It was installed using the domain name <info>$this->site.test</info>.");
+        $output->writeln("Don't forget to add <info>$this->site.test</info> to your <info>/etc/hosts</info>");
         $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
     }
 
@@ -198,7 +198,7 @@ class SiteCreate extends SiteAbstract
 
     public function installWordPress(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln(WP::call("core install --url=$this->site.dev --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev"));
+        $output->writeln(WP::call("core install --url=$this->site.test --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.dev"));
         $output->writeln(WP::call("user update admin --role=administrator --path=$this->target_dir"));
     }
 

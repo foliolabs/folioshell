@@ -29,7 +29,7 @@ abstract class SiteAbstract extends Command
         $this->addArgument(
             'site',
             InputArgument::REQUIRED,
-            'Alphanumeric site name. Also used in the site URL with .dev domain'
+            'Alphanumeric site name. Also used in the site URL with .test domain'
         )->addOption(
             'www',
             null,
