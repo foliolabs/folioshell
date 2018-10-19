@@ -98,7 +98,7 @@ class SiteCreate extends SiteAbstract
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The HTTP port the virtual host should listen to',
-                8080
+                80
             )
             ->addOption(
                 'disable-ssl',
