@@ -204,34 +204,19 @@ class SiteCreate extends SiteAbstract
 
     public function addVirtualHost(InputInterface $input, OutputInterface $output)
     {
-        if (is_dir('/etc/apache2/sites-available'))
-        {
-            $tmp = self::$files.'/.vhost.tmp';
+        $command_input = new ArrayInput(array(
+            'vhost:create',
+            'site'          => $this->site,
+            '--http-port'   => $input->getOption('http-port'),
+            '--disable-ssl' => $input->getOption('disable-ssl'),
+            '--ssl-crt'     => $input->getOption('ssl-crt'),
+            '--ssl-key'     => $input->getOption('ssl-key'),
+            '--ssl-port'    => $input->getOption('ssl-port'),
+            '--www'         => $input->getOption('www')
+        ));
 
-            $template = file_get_contents(self::$files.'/vhost.conf');
-
-            file_put_contents($tmp, sprintf($template, $this->site, $this->target_dir, $input->getOption('http-port')));
-
-            if (!$input->getOption('disable-ssl'))
-            {
-                $ssl_crt = $input->getOption('ssl-crt');
-                $ssl_key = $input->getOption('ssl-key');
-                $ssl_port = $input->getOption('ssl-port');
-
-                if (file_exists($ssl_crt) && file_exists($ssl_key))
-                {
-                    $template = "\n\n" . file_get_contents(self::$files . '/vhost.ssl.conf');
-                    file_put_contents($tmp, sprintf($template, $this->site, $this->target_dir, $ssl_port, $ssl_crt, $ssl_key), FILE_APPEND);
-                }
-                else $output->writeln('<comment>SSL was not enabled for the site. One or more certificate files are missing.</comment>');
-            }
-
-            `sudo tee /etc/apache2/sites-available/1-$this->site.conf < $tmp`;
-            `sudo a2ensite 1-$this->site.conf`;
-            `sudo /etc/init.d/apache2 restart > /dev/null 2>&1`;
-
-            @unlink($tmp);
-        }
+        $command = new Vhost\Create();
+        $command->run($command_input, $output);
     }
 
     public function symlinkProjects(InputInterface $input, OutputInterface $output)

@@ -8,7 +8,9 @@
 namespace Folioshell\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\ArrayInput;
 
 class SiteDelete extends SiteAbstract
 {
@@ -18,7 +20,19 @@ class SiteDelete extends SiteAbstract
 
         $this
             ->setName('site:delete')
-            ->setDescription('Delete a site');
+            ->setDescription('Delete a site')
+            ->addOption(
+                'skip-database',
+                null,
+                InputOption::VALUE_NONE,
+                'Leave the database intact'
+            )
+            ->addOption(
+                'skip-vhost',
+                null,
+                InputOption::VALUE_NONE,
+                'Leave the virtual host intact'
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -36,6 +50,10 @@ class SiteDelete extends SiteAbstract
         if ((strpos(getcwd(), $this->target_dir) === 0) && (getcwd() !== $this->www)) {
             throw new \RuntimeException('You are currently in the directory you are trying to delete. Aborting');
         }
+
+        if (!file_exists($this->target_dir)) {
+            throw new \RuntimeException(sprintf('The site %s does not exist!', $this->site));
+        }
     }
 
     public function deleteFolder(InputInterface $input, OutputInterface $output)
@@ -45,6 +63,10 @@ class SiteDelete extends SiteAbstract
 
     public function deleteDatabase(InputInterface $input, OutputInterface $output)
     {
+        if ($input->getOption('skip-database')) {
+            return;
+        }
+
         $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
         $command  = sprintf("echo 'DROP DATABASE IF EXISTS `$this->target_db`' | mysql -u'%s' %s", $this->mysql->user, $password);
 
@@ -57,11 +79,16 @@ class SiteDelete extends SiteAbstract
 
     public function deleteVirtualHost(InputInterface $input, OutputInterface $output)
     {
-        if (is_file('/etc/apache2/sites-available/1-'.$this->site.'.conf'))
-        {
-            `sudo a2dissite 1-$this->site.conf`;
-            `sudo rm -f /etc/apache2/sites-available/1-$this->site.conf`;
-            `sudo /etc/init.d/apache2 restart > /dev/null 2>&1`;
+        if ($input->getOption('skip-vhost')) {
+            return;
         }
+
+        $command_input = new ArrayInput(array(
+            'vhost:remove',
+            'site' => $this->site
+        ));
+
+        $command = new Vhost\Remove();
+        $command->run($command_input, $output);
     }
 }
