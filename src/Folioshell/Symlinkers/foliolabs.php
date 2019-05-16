@@ -8,3 +8,7 @@
 use Folioshell\Command\Extension;
 
 Extension\Symlink::registerDependencies('foliolabs-todo', ['foliokit', 'kodekit']);
+Extension\Symlink::registerDependencies('foliolabs-docman', ['foliokit', 'kodekit']);
+Extension\Symlink::registerDependencies('foliolabs-fileman', ['foliokit', 'kodekit']);
+Extension\Symlink::registerDependencies('foliolabs-logman', ['foliokit', 'kodekit']);
+Extension\Symlink::registerDependencies('foliolabs-textman', ['foliokit', 'kodekit']);
