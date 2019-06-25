@@ -200,6 +200,14 @@ class SiteCreate extends SiteAbstract
     {
         $output->writeln(WP::call("core install --url=$this->site.test --path=$this->target_dir --title=$this->site --admin_user=admin --admin_password=admin --admin_email=admin@$this->site.test"));
         $output->writeln(WP::call("user update admin --role=administrator --path=$this->target_dir"));
+
+        $roles = ['author', 'contributor', 'editor', 'subscriber'];
+
+        foreach ($roles as $role) {
+            $command = "user create {$role} {$role}@{$this->site}.test --user_pass={$role} --role={$role} --path={$this->target_dir}";
+            $output->writeln(WP::call($command));
+        }
+
     }
 
     public function addVirtualHost(InputInterface $input, OutputInterface $output)
