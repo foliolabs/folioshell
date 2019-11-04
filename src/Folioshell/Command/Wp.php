@@ -65,7 +65,7 @@ class Wp extends Command
 
             $binary   = $dir . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR .'wp';
             $vendored = $dir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR .'wp';
-            
+
             if (file_exists($binary)) {
                 return $binary;
             }

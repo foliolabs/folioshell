@@ -48,6 +48,8 @@ class SiteCreate extends SiteAbstract
      * @var array
      */
     protected $symlink = array();
+    
+    protected $symlinked_projects;
 
     /**
      * WP_CLI executable path
