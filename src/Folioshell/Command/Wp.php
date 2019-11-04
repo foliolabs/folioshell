@@ -27,7 +27,7 @@ class Wp extends Command
     public static function call($arguments)
     {
         if (!static::$wp) {
-            static::$wp = realpath(__DIR__ . '/../../../vendor/bin/wp');
+            static::$wp = self::_setWPPath();
         }
 
         $wp = static::$wp;
@@ -53,5 +53,27 @@ class Wp extends Command
         }
 
         $output->writeln(static::call($arguments));
+    }
+
+    protected static function _setWPPath()
+    {
+        $dirs = explode(DIRECTORY_SEPARATOR, __DIR__);
+
+        for ($i = count($dirs); $i >= 0; $i--)
+        {
+            $dir = implode(DIRECTORY_SEPARATOR, array_slice($dirs, 0, $i));
+
+            $binary   = $dir . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR .'wp';
+            $vendored = $dir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR .'wp';
+            
+            if (file_exists($binary)) {
+                return $binary;
+            }
+            elseif (file_exists($vendored)) {
+                return $vendored;
+            }
+        }
+
+        throw new \Exception('Unable to locate bin/wp');
     }
 }
