@@ -106,6 +106,7 @@ class Application extends \Symfony\Component\Console\Application
             new Command\Wp(),
             new Command\SiteCreate(),
             new Command\SiteDelete(),
+            new Command\SiteList(),
 
             new Command\Extension\Symlink(),
 
