@@ -7,11 +7,11 @@ use Symfony\Component\Console\Output;
 class Application extends \Symfony\Component\Console\Application
 {
     /**
-     * wp-console version
+     * Application version
      *
      * @var string
      */
-    const VERSION = '0.3.1';
+    const VERSION = '1.0.0';
 
     /**
      * Application name
