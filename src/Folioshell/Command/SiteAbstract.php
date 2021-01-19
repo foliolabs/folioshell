@@ -54,6 +54,45 @@ abstract class SiteAbstract extends Command
         ;
     }
 
+    public function addArgument($name, $mode = null, $description = '', $default = null)
+    {
+        if ($mode != InputOption::VALUE_NONE) {
+            $default = $this->_getConfigOverride($name) ?? $default;
+        }
+
+        return parent::addArgument($name, $mode, $description, $default);
+    }
+
+    public function addOption($name, $shortcut = null, $mode = null, $description = '', $default = null)
+    {
+        if ($mode != InputOption::VALUE_NONE) {
+            $default = $this->_getConfigOverride($name) ?? $default;
+        }
+
+        return parent::addOption($name, $shortcut, $mode, $description, $default);
+    }
+
+    protected function _getConfigOverride($name)
+    {
+        $override = null;
+
+        if ($command = $this->getName())
+        {
+            $file = sprintf('%s/.foliolabs/console/config.yaml', trim(`echo ~`));
+
+            if (file_exists($file))
+            {
+                $overrides = Yaml::parseFile($file);
+
+                if (isset($overrides[$command][$name])) {
+                    $override = $overrides[$command][$name];
+                }
+            }
+        }
+
+        return $override;
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->site       = $input->getArgument('site');
