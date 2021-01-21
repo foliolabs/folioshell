@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-abstract class SiteAbstract extends Command
+abstract class SiteAbstract extends Configurable
 {
     protected $site;
     protected $www;
