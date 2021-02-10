@@ -187,25 +187,30 @@ class Create extends Command\SiteAbstract
 
     protected function _getTemplate(InputInterface $input, $application = 'apache')
     {
-        $path = realpath(__DIR__.'/../../../../bin/.files/vhosts');
 
         if ($template = $input->getOption(sprintf('%s-template', $application)))
         {
-            if (file_exists($template)) {
-                return file_get_contents($template);
+            if (file_exists($template))
+            {
+                $file = basename($template);
+                $path = dirname($template);
             }
             else throw new \Exception(sprintf('Template file %s does not exist.', $template));
         }
-
-        switch($application)
+        else
         {
-            case 'nginx':
-                $file = 'nginx.conf';
-                break;
-            case 'apache':
-            default:
-                $file = 'apache.conf';
-                break;
+            $path = realpath(__DIR__.'/../../../../bin/.files/vhosts');
+
+            switch($application)
+            {
+                case 'nginx':
+                    $file = 'nginx.conf';
+                    break;
+                case 'apache':
+                default:
+                    $file = 'apache.conf';
+                    break;
+            }
         }
 
         $template = file_get_contents(sprintf('%s/%s', $path, $file));
