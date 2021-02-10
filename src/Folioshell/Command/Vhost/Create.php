@@ -7,11 +7,13 @@
 
 namespace Folioshell\Command\Vhost;
 
+use Folioshell;
+use \Folioshell\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Create extends \Folioshell\Command\SiteAbstract
+class Create extends Command\SiteAbstract
 {
     protected function configure()
     {
@@ -61,6 +63,41 @@ class Create extends \Folioshell\Command\SiteAbstract
                 'PHP-FPM address or path to Unix socket file, set as value for fastcgi_pass in Nginx config',
                 'unix:/opt/php/php-fpm.sock'
             )
+            ->addOption(
+                'apache-template',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Custom file to use as the Apache vhost configuration. Make sure to include HTTP and SSL directives if you need both.',
+                null
+            )
+            ->addOption(
+                'nginx-template',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Custom file to use as the Nginx vhost configuration. Make sure to include HTTP and SSL directives if you need both.',
+                null
+            )
+            ->addOption('apache-path',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The Apache2 path',
+                '/etc/apache2'
+            )->addOption('nginx-path',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The Nginx path',
+                '/etc/nginx'
+            )->addOption('apache-restart',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The full command for restarting Apache2',
+                null
+            )->addOption('nginx-restart',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The full command for restarting Nginx',
+                null)
+        ;
         ;
     }
 
@@ -68,95 +105,145 @@ class Create extends \Folioshell\Command\SiteAbstract
     {
         parent::execute($input, $output);
 
-        $site = $input->getArgument('site');
-        $port = $input->getOption('http-port');
-        $path = realpath(__DIR__.'/../../../../bin/.files/');
-        $tmp  = '/tmp/vhost.tmp';
+        $site    = $input->getArgument('site');
+        $restart = array();
 
-        if (is_dir('/etc/apache2/sites-available'))
+        $tmp = '/tmp/vhost.tmp';
+
+        $variables = $this->_getVariables($input);
+
+        $folder = sprintf('%s/sites-available', $input->getOption('apache-path'));
+
+        if (is_dir($folder))
         {
-            $template     = file_get_contents($path.'/vhosts/apache.conf');
-            $documentroot = $this->target_dir;
+            $template = $this->_getTemplate($input, 'apache');
+            $template = str_replace(array_keys($variables), array_values($variables), $template);
 
-            file_put_contents($tmp, sprintf($template, $site, $documentroot, $port));
+            file_put_contents($tmp, $template);
 
-            if (!$input->getOption('disable-ssl'))
-            {
-                $ssl_crt  = $input->getOption('ssl-crt');
-                $ssl_key  = $input->getOption('ssl-key');
-                $ssl_port = $input->getOption('ssl-port');
+            `sudo tee $folder/1-$site.conf < $tmp`;
 
-                if (file_exists($ssl_crt) && file_exists($ssl_key))
-                {
-                    $template = "\n\n" . file_get_contents($path.'/vhosts/apache.ssl.conf');
-                    file_put_contents($tmp, sprintf($template, $site, $documentroot, $ssl_port, $ssl_crt, $ssl_key), FILE_APPEND);
-                }
-                else $output->writeln('<comment>SSL was not enabled for the site. One or more certificate files are missing.</comment>');
-            }
+            $link = sprintf('%s/sites-enabled/1-%s.conf', $input->getOption('apache-path'), $site);
 
-            `sudo tee /etc/apache2/sites-available/1-$site.conf < $tmp`;
-            `sudo a2ensite 1-$site.conf`;
-            `sudo /etc/init.d/apache2 restart > /dev/null 2>&1`;
+            `sudo ln -fs $folder/1-$site.conf $link`;
+
+            $restart[] = 'apache';
 
             @unlink($tmp);
         }
 
-        if (is_dir('/etc/nginx/sites-available'))
+        $folder = sprintf('%s/sites-available', $input->getOption('nginx-path'));
+
+        if (is_dir($folder))
         {
-            $socket = $input->getOption('php-fpm-address');
-
-            if ($this->_isJoomlatoolsBox() && $port == 80) {
-                $port = 81;
+            if (Folioshell\Util::isJoomlatoolsBox() && $variables['%http_port%'] == 80) {
+                $variables['%http_port%'] = 81;
             }
 
-            $file = 'nginx.conf';
+            $template = $this->_getTemplate($input, 'nginx');
 
-            $template     = file_get_contents($path.'/vhosts/'.$file);
-            $documentroot = $this->target_dir;
-
-            file_put_contents($tmp, sprintf($template, $site, $documentroot, $port, $socket));
-
-            if (!$input->getOption('disable-ssl'))
-            {
-                $ssl_crt  = $input->getOption('ssl-crt');
-                $ssl_key  = $input->getOption('ssl-key');
-                $ssl_port = $input->getOption('ssl-port');
-
-                if ($this->_isJoomlatoolsBox() && $ssl_port == 443) {
-                    $ssl_port = 444;
-                }
-
-                if (file_exists($ssl_crt) && file_exists($ssl_key))
-                {
-                    $template = "\n\n" . file_get_contents($path.'/vhosts/nginx.ssl.conf');
-                    file_put_contents($tmp, sprintf($template, $site, $documentroot, $ssl_port, $socket, $ssl_crt, $ssl_key), FILE_APPEND);
-                }
-                else $output->writeln('<comment>SSL was not enabled for the site. One or more certificate files are missing.</comment>');
+            if (!$input->getOption('disable-ssl') && Folioshell\Util::isJoomlatoolsBox() && $variables['%ssl_port%'] == 443) {
+                $variables['%ssl_port%'] = 444;
             }
 
-            `sudo tee /etc/nginx/sites-available/1-$site.conf < $tmp`;
-            `sudo ln -fs /etc/nginx/sites-available/1-$site.conf /etc/nginx/sites-enabled/1-$site.conf`;
-            `sudo /etc/init.d/nginx restart > /dev/null 2>&1`;
+            $vhost = str_replace(array_keys($variables), array_values($variables), $template);
+
+            file_put_contents($tmp, $vhost);
+
+            `sudo tee $folder/1-$site.conf < $tmp`;
+
+            $link = sprintf('%s/sites-enabled/1-%s.conf', $input->getOption('nginx-path'), $site);
+
+            `sudo ln -fs $folder/1-$site.conf $link`;
+
+            $restart[] = 'nginx';
 
             @unlink($tmp);
         }
+
+        if ($restart)
+        {
+            $ignored = array();
+
+            foreach ($restart as $server)
+            {
+                if ($command = $input->getOption(sprintf('%s-restart', $server))) {
+                    `sudo $command`;
+                } else {
+                    $ignored[] = $server;
+                }
+            }
+
+            if (Folioshell\Util::isJoomlatoolsBox() && $ignored)
+            {
+                $arguments = implode(' ', $ignored);
+
+                `box server:restart $arguments`;
+            }
+        }
+
+        return 0;
     }
 
-    protected function _isJoomlatoolsBox()
+    protected function _getTemplate(InputInterface $input, $application = 'apache')
     {
-        if (php_uname('n') === 'joomlatools') {
-            return true;
-        }
+        $path = realpath(__DIR__.'/../../../../bin/.files/vhosts');
 
-        // Support boxes that do not have the correct hostname set
-        $user = exec('whoami');
-        if (trim($user) == 'vagrant' && file_exists('/home/vagrant/scripts/dashboard/index.php'))
+        if ($template = $input->getOption(sprintf('%s-template', $application)))
         {
-            if (file_exists('/etc/varnish/default.vcl')) {
-                return true;
+            if (file_exists($template)) {
+                return file_get_contents($template);
             }
+            else throw new \Exception(sprintf('Template file %s does not exist.', $template));
         }
 
-        return false;
+        switch($application)
+        {
+            case 'nginx':
+                $file = 'nginx.conf';
+                break;
+            case 'apache':
+            default:
+                $file = 'apache.conf';
+                break;
+        }
+
+        $template = file_get_contents(sprintf('%s/%s', $path, $file));
+
+        if (!$input->getOption('disable-ssl'))
+        {
+            if (file_exists($input->getOption('ssl-crt')) && file_exists($input->getOption('ssl-key')))
+            {
+                $file = str_replace('.conf', '.ssl.conf', $file);
+
+                $template .= "\n\n" . file_get_contents(sprintf('%s/%s', $path, $file));
+            }
+            else throw new \Exception('Unable to enable SSL for the site: one or more certificate files are missing.');
+        }
+
+        return $template;
+    }
+
+    protected function _getVariables(InputInterface $input)
+    {
+        $documentroot = $this->target_dir;
+
+        $variables = array(
+            '%site%'       => $input->getArgument('site'),
+            '%root%'       => $documentroot,
+            '%http_port%'  => $input->getOption('http-port'),
+            '%php_fpm%'    => $input->getOption('php-fpm-address')
+        );
+
+        if (!$input->getOption('disable-ssl'))
+        {
+            $variables = array_merge($variables, array(
+                '%ssl_port%'    => $input->getOption('ssl-port'),
+                '%certificate%' => $input->getOption('ssl-crt'),
+                '%key%'         => $input->getOption('ssl-key')
+            ));
+        }
+
+        return $variables;
     }
 }
