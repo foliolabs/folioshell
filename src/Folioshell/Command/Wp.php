@@ -53,6 +53,8 @@ class Wp extends Command
         }
 
         $output->writeln(static::call($arguments));
+
+        return 0;
     }
 
     protected static function _setWPPath()

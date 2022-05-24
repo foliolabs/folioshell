@@ -85,5 +85,7 @@ class SiteList extends SiteAbstract
         }
 
         $output->writeln($string);
+
+        return 0;
     }
 }

@@ -134,6 +134,8 @@ class SiteCreate extends SiteAbstract
         $output->writeln("It was installed using the domain name <info>$this->site.test</info>.");
         $output->writeln("Don't forget to add <info>$this->site.test</info> to your <info>/etc/hosts</info>");
         $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)

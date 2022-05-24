@@ -65,5 +65,7 @@ abstract class SiteAbstract extends Configurable
 
         $credentials = explode(':', $input->getOption('mysql'), 2);
         $this->mysql = (object) array('user' => $credentials[0], 'password' => $credentials[1]);
+
+        return 0;
     }
 }

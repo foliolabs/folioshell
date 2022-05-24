@@ -43,6 +43,8 @@ class SiteDelete extends SiteAbstract
         $this->deleteFolder($input, $output);
         $this->deleteVirtualHost($input, $output);
         $this->deleteDatabase($input, $output);
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)

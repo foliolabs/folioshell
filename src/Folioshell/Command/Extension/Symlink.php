@@ -117,6 +117,8 @@ EOL
 
         $this->check($input, $output);
         $this->symlinkProjects($input, $output);
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)

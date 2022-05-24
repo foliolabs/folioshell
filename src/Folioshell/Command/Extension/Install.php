@@ -46,6 +46,8 @@ class Install extends Command\SiteAbstract
 
         $this->check($input, $output);
         $this->install($input, $output);
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)
