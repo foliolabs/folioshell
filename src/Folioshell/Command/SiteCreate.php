@@ -177,7 +177,9 @@ class SiteCreate extends SiteAbstract
 
     public function modifyConfiguration(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln(WP::call("config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password} --extra-php=\"define( 'WP_DEBUG', true ); define( 'WP_DEBUG_LOG', true );\""));
+        $output->writeln(WP::call("config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password}"));
+        $output->writeln(WP::call("config set --path={$this->target_dir} --raw WP_DEBUG true"));
+        $output->writeln(WP::call("config set --path={$this->target_dir} --raw WP_DEBUG_LOG true"));
     }
 
     public function installWordPress(InputInterface $input, OutputInterface $output)
