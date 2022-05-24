@@ -103,26 +103,6 @@ class SiteCreate extends SiteAbstract
                 80
             )
             ->addOption(
-                'disable-ssl',
-                null,
-                InputOption::VALUE_NONE,
-                'Disable SSL for this site'
-            )
-            ->addOption(
-                'ssl-crt',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The full path to the signed cerfificate file',
-                '/etc/apache2/ssl/server.crt'
-            )
-            ->addOption(
-                'ssl-key',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The full path to the private cerfificate file',
-                '/etc/apache2/ssl/server.key'
-            )
-            ->addOption(
                 'ssl-port',
                 null,
                 InputOption::VALUE_OPTIONAL,
@@ -218,9 +198,6 @@ class SiteCreate extends SiteAbstract
             'vhost:create',
             'site'          => $this->site,
             '--http-port'   => $input->getOption('http-port'),
-            '--disable-ssl' => $input->getOption('disable-ssl'),
-            '--ssl-crt'     => $input->getOption('ssl-crt'),
-            '--ssl-key'     => $input->getOption('ssl-key'),
             '--ssl-port'    => $input->getOption('ssl-port'),
             '--www'         => $input->getOption('www')
         ));
