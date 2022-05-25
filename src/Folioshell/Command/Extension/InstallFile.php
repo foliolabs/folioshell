@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class InstallFile extends Command\SiteAbstract
+class InstallFile extends Command\AbstractSite
 {
     protected $plugin = array();
 

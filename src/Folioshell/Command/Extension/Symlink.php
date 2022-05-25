@@ -7,7 +7,7 @@
 
 namespace Folioshell\Command\Extension;
 
-use Folioshell\Command\SiteAbstract;
+use Folioshell\Command\AbstractSite;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -15,7 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use Folioshell\Command\Extension\Iterator\Iterator;
 
-class Symlink extends SiteAbstract
+class Symlink extends AbstractSite
 {
     protected $symlink  = array();
     protected $projects = array();

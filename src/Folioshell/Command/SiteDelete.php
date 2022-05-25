@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 
-class SiteDelete extends SiteAbstract
+class SiteDelete extends AbstractSite
 {
     protected function configure()
     {

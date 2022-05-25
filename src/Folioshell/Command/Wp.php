@@ -40,7 +40,7 @@ class Wp extends Command
         parent::configure();
 
         $this->setName('wp')
-            ->setDescription('Run WP CLI commands with the syntax "folioshell box wp -- plugin activate"')
+            ->setDescription('Run WP CLI commands with the syntax "folioshell wp -- plugin activate"')
             ->addArgument('arguments', InputArgument::IS_ARRAY, 'Original arguments');
     }
 

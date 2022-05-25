@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class SiteCreate extends SiteAbstract
+class SiteCreate extends AbstractSite
 {
     /**
      * File cache
@@ -70,7 +70,7 @@ class SiteCreate extends SiteAbstract
             ->setName('site:create')
             ->setDescription('Create a WordPress site')
             ->addOption(
-                'wordpress',
+                'release',
                 null,
                 InputOption::VALUE_REQUIRED,
                 "WordPress version. Can be a release number (3.2, 4.2.1, ..) or branch name. Run `wordpress versions` for a full list.\nUse \"none\" for an empty virtual host.",
@@ -109,12 +109,49 @@ class SiteCreate extends SiteAbstract
                 'The port on which the server will listen for SSL requests',
                 '443'
             )
+            ->addOption(
+                'vhost', 
+                null,
+                InputOption::VALUE_NEGATABLE,
+                'Create an Apache vhost for the site',
+                true
+            )
+            ->addOption(
+                'vhost-template',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Custom file to use as the Apache vhost configuration. Make sure to include HTTP and SSL directives if you need both.',
+                null
+            )
+            ->addOption(
+                'vhost-folder',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The Apache2 vhost folder',
+                null
+            )
+            ->addOption(
+                'vhost-filename',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The Apache2 vhost file name',
+                null,
+            )
+            ->addOption(
+                'vhost-restart-command',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The full command for restarting Apache2',
+                null
+            )
             ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         parent::execute($input, $output);
+
+        $this->version = $input->getOption('release');
 
         $this->symlink = $input->getOption('symlink');
         if (is_string($this->symlink)) {
@@ -126,7 +163,11 @@ class SiteCreate extends SiteAbstract
         $this->createDatabase($input, $output);
         $this->modifyConfiguration($input, $output);
         $this->installWordPress($input, $output);
-        $this->addVirtualHost($input, $output);
+
+        if ($input->getOption('vhost')) {
+            $this->addVirtualHost($input, $output);
+        }
+
         $this->symlinkProjects($input, $output);
         $this->installExtensions($input, $output);
 
@@ -158,7 +199,7 @@ class SiteCreate extends SiteAbstract
 
     public function createFolder(InputInterface $input, OutputInterface $output)
     {
-        $version = $input->getOption('wordpress');
+        $version = $input->getOption('release');
 
         `mkdir -p $this->target_dir`;
         $output->writeln(WP::call("core download --path=$this->target_dir --version=$version"));
@@ -196,18 +237,24 @@ class SiteCreate extends SiteAbstract
 
     public function addVirtualHost(InputInterface $input, OutputInterface $output)
     {
-        $command_input = new ArrayInput(array(
+        $command_input = array(
             'vhost:create',
             'site'          => $this->site,
             '--http-port'   => $input->getOption('http-port'),
             '--ssl-port'    => $input->getOption('ssl-port'),
-            '--www'         => $input->getOption('www')
-        ));
+            '--www'         => $input->getOption('www'),
+        );
+
+        foreach (array('template', 'folder', 'filename', 'restart-command') as $vhostkey) {
+            if ($input->getOption('vhost-'.$vhostkey) !== null) {
+                $command_input['--'.$vhostkey] = $input->getOption('vhost-'.$vhostkey);
+            }
+        }
 
         $command = new Vhost\Create();
-        $command->run($command_input, $output);
+        $command->run(new ArrayInput($command_input), $output);
     }
-
+    
     public function symlinkProjects(InputInterface $input, OutputInterface $output)
     {
         if ($this->symlink)
