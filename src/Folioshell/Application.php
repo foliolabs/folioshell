@@ -67,7 +67,8 @@ class Application extends \Symfony\Component\Console\Application
         $commands = array_merge($commands, array(
             new Command\Wp(),
 
-            new Command\DatabaseDump(), 
+            new Command\DatabaseDrop(), 
+            new Command\DatabaseExport(), 
             
             new Command\SiteCreate(),
             new Command\SiteDelete(),

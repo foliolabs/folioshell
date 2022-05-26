@@ -20,13 +20,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @author  Steven Rombauts <https://github.com/stevenrombauts>
  * @package Joomlatools\Console
  */
-class DatabaseDump extends AbstractSite
+class DatabaseExport extends AbstractSite
 {
     protected function configure()  
     {
         parent::configure();
 
-        $this->setName('database:dump')
+        $this->setName('database:export')
             ->addOption(
                 'folder',
                 null,

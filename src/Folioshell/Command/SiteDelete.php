@@ -52,10 +52,6 @@ class SiteDelete extends AbstractSite
         if ((strpos(getcwd(), $this->target_dir) === 0) && (getcwd() !== $this->www)) {
             throw new \RuntimeException('You are currently in the directory you are trying to delete. Aborting');
         }
-
-        if (!file_exists($this->target_dir)) {
-            throw new \RuntimeException(sprintf('The site %s does not exist!', $this->site));
-        }
     }
 
     public function deleteFolder(InputInterface $input, OutputInterface $output)
@@ -69,14 +65,22 @@ class SiteDelete extends AbstractSite
             return;
         }
 
-        $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-        $command  = sprintf("echo 'DROP DATABASE IF EXISTS `$this->target_db`' | mysql -u'%s' %s", $this->mysql->user, $password);
+        $arguments = array(
+            'database:drop',
+            'site' => $this->site
+        );
 
-        $result   = exec($command);
-
-        if (!empty($result)) { // MySQL returned an error
-            throw new \RuntimeException(sprintf('Cannot delete database %s. Error: %s', $this->target_db, $result));
+        $optionalArgs = array('mysql-login', 'mysql-db-prefix', 'mysql-host', 'mysql-port', 'mysql-database');
+        foreach ($optionalArgs as $optionalArg)
+        {
+            $value = $input->getOption($optionalArg);
+            if (!empty($value)) {
+                $arguments['--' . $optionalArg] = $value;
+            }
         }
+
+        $command = new DatabaseDrop();
+        $command->run(new ArrayInput($arguments), $output);
     }
 
     public function deleteVirtualHost(InputInterface $input, OutputInterface $output)

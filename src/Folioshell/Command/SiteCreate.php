@@ -173,7 +173,6 @@ class SiteCreate extends AbstractSite
 
         $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
         $output->writeln("It was installed using the domain name <info>$this->site.test</info>.");
-        $output->writeln("Don't forget to add <info>$this->site.test</info> to your <info>/etc/hosts</info>");
         $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
 
         return 0;
@@ -181,16 +180,15 @@ class SiteCreate extends AbstractSite
 
     public function check(InputInterface $input, OutputInterface $output)
     {
-        if (file_exists($this->target_dir)) {
-            throw new \RuntimeException(sprintf('A site with name %s already exists', $this->site));
+        if (file_exists($this->target_dir) && !is_dir($this->target_dir)) {
+            throw new \RuntimeException(sprintf('A file named \'%s\' already exists', $this->site));
         }
 
-        $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-        $result = exec(sprintf(
-                "echo 'SHOW DATABASES LIKE \"%s\"' | mysql -u'%s' %s",
-                $this->target_db, $this->mysql->user, $password
-            )
-        );
+        if (is_dir($this->target_dir) && count(scandir($this->target_dir)) > 2) {
+            throw new \RuntimeException(sprintf('Site directory \'%s\' is not empty.', $this->site));
+        }
+
+        $result = $this->_executeSQL(sprintf("SHOW DATABASES LIKE \"%s\"", $this->target_db));
 
         if (!empty($result)) { // Table exists
             throw new \RuntimeException(sprintf('A database with name %s already exists', $this->target_db));
