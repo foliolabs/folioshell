@@ -171,6 +171,25 @@ class SiteCreate extends AbstractSite
         $this->symlinkProjects($input, $output);
         $this->installExtensions($input, $output);
 
+        /*
+         * Run all site:create:* commands after site creation
+         */
+        try {
+            $commands = $this->getApplication()->all('site:create');
+            
+            foreach ($commands as $command) {
+                $arguments = array(
+                    $command->getName(),
+                    'site'   => $this->site,
+                    '--www'  => $this->www
+                );
+                $command->setApplication($this->getApplication());
+                $command->run(new ArrayInput($arguments), $output);
+            }
+        }
+        catch (\Symfony\Component\Console\Exception\NamespaceNotFoundException $e) {}
+        catch (\Symfony\Component\Console\Exception\CommandNotFoundException $e) {}
+        
         $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
         $output->writeln("It was installed using the domain name <info>$this->site.test</info>.");
         $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
