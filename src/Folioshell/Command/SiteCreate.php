@@ -144,6 +144,13 @@ class SiteCreate extends AbstractSite
                 'The full command for restarting Apache2',
                 null
             )
+            ->addOption(
+                'config-extra',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Custom code to append to wp-config.php',
+                null
+            )
             ;
     }
 
@@ -235,7 +242,26 @@ class SiteCreate extends AbstractSite
 
     public function modifyConfiguration(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln(WP::call("config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password}"));
+        $extra = $input->getOption('config-extra');
+        $replacement = "/** Folioshell extra */\n$extra\n/** End of Folioshell extra */";
+        $placeholder = '/**folioshell_placeholder*/';
+        $command = "config create --force --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password}";
+
+        if ($extra) {
+            $command .= " --extra-php=\"$placeholder\"";
+        }
+        
+        $output->writeln(WP::call($command));
+            
+        if ($extra) 
+        {
+            $configPath = trim(WP::call("config --path={$this->target_dir} path"));
+
+            $config = \file_get_contents($configPath);
+            $config = \str_replace($placeholder, $replacement, $config);
+
+            \file_put_contents($configPath, $config);
+        }
     }
 
     public function installWordPress(InputInterface $input, OutputInterface $output)
