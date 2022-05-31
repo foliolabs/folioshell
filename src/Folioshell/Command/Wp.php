@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Wp extends Configurable
+class Wp extends AbstractSite
 {
     protected static $wp;
 
@@ -37,16 +37,30 @@ class Wp extends Configurable
         parent::configure();
 
         $this->setName('wp')
-            ->setDescription('Run WP CLI commands with the syntax "folioshell wp -- plugin activate"')
+            ->setDescription('Run WP CLI commands with the syntax "folioshell wp sitename -- config list"')
             ->addArgument('arguments', InputArgument::IS_ARRAY, 'Original arguments');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        parent::execute($input, $output);
+
         $arguments = $input->getArgument('arguments');
+
+        $has_path = false;
+        foreach ($arguments as $arg) {
+            if (strpos($arg, '--path') === 0) {
+                $has_path = true;
+                break;
+            }
+        }
 
         if (is_array($arguments)) {
             $arguments = implode(' ', $arguments);
+        }
+
+        if (!$has_path) {
+            $arguments = '--path='.$this->target_dir.' '.$arguments;
         }
 
         $output->writeln(static::call($arguments));
