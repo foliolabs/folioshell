@@ -157,8 +157,6 @@ class SiteCreate extends AbstractSite
     {
         parent::execute($input, $output);
 
-        $this->modifyConfiguration($input, $output);die;
-
         $this->version = $input->getOption('release');
 
         $this->symlink = $input->getOption('symlink');
