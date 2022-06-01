@@ -144,6 +144,12 @@ class SiteCreate extends AbstractSite
                 'The full command for restarting Apache2',
                 null
             )
+            ->addOption(
+                'chown',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Change file owner as the passed user'
+            )
             ;
     }
 
@@ -172,6 +178,11 @@ class SiteCreate extends AbstractSite
 
         $this->symlinkProjects($input, $output);
         $this->installExtensions($input, $output);
+
+        if ($input->hasOption('chown')) {
+            $user = $input->getOption('chown');
+            `chown -R $user:$user $this->target_dir`;
+        }
 
         /*
          * Run all site:create:* commands after site creation
