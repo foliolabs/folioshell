@@ -144,19 +144,14 @@ class SiteCreate extends AbstractSite
                 'The full command for restarting Apache2',
                 null
             )
-            ->addOption(
-                'config-extra',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'Custom code to append to wp-config.php',
-                null
-            )
             ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         parent::execute($input, $output);
+
+        $this->modifyConfiguration($input, $output);die;
 
         $this->version = $input->getOption('release');
 
@@ -242,18 +237,23 @@ class SiteCreate extends AbstractSite
 
     public function modifyConfiguration(InputInterface $input, OutputInterface $output)
     {
-        $extra = $input->getOption('config-extra');
-        $replacement = "/** Folioshell extra */\n$extra\n/** End of Folioshell extra */";
-        $placeholder = '/**folioshell_placeholder*/';
+        $extra = false;
+        $extraPath = $this->getApplication()->getConsoleHome().'/wp-config.extra.php';
+
         $command = "config create --force --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password}";
 
-        if ($extra) {
+        if (is_file($extraPath)) 
+        {
+            $extra = \file_get_contents($extraPath);
+            $replacement = "/** Folioshell extra */\n$extra\n/** End of Folioshell extra */";
+            $placeholder = '/**folioshell_placeholder*/';
+
             $command .= " --extra-php=\"$placeholder\"";
         }
         
         $output->writeln(WP::call($command));
             
-        if ($extra) 
+        if ($extra)
         {
             $configPath = trim(WP::call("config --path={$this->target_dir} path"));
 
