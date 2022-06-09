@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class InstallFile extends Command\SiteAbstract
+class InstallFile extends Command\AbstractSite
 {
     protected $plugin = array();
 
@@ -38,6 +38,8 @@ class InstallFile extends Command\SiteAbstract
 
         $this->check($input, $output);
         $this->install($input, $output);
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)

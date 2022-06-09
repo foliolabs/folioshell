@@ -43,16 +43,11 @@ class Application extends \Symfony\Component\Console\Application
     protected $_plugins;
 
     /**
-     * @inherits
-     *
-     * @param string $name
-     * @param string $version
+     * @inheritdoc
      */
     public function __construct($name = 'UNKNOWN', $version = 'UNKNOWN')
     {
         parent::__construct(self::NAME, self::VERSION);
-
-        $this->_plugin_path = realpath(dirname(__FILE__) . '/../../../plugins/');
     }
 
     /**
@@ -68,18 +63,42 @@ class Application extends \Symfony\Component\Console\Application
     public function run(Input\InputInterface $input = null, Output\OutputInterface $output = null)
     {
         if (null === $input) {
-            $this->_input = new Input\ArgvInput();
+            $input = new Input\ArgvInput();
         }
 
         if (null === $output) {
-            $this->_output = new Output\ConsoleOutput();
+            $output = new Output\ConsoleOutput();
         }
+
+        $this->_input  = $input;
+        $this->_output = $output;
 
         $this->configureIO($this->_input, $this->_output);
 
+        $this->_setup();
+
         $this->_loadPlugins();
 
-        return parent::run($this->_input, $this->_output);
+        $this->_loadExtraCommands();
+
+        parent::run($this->_input, $this->_output);
+    }
+
+    /**
+     * Get the home directory path
+     *
+     * @return string Path to the Joomlatools Console home directory
+     */
+    public function getConsoleHome()
+    {
+        $home       = getenv('HOME');
+        $customHome = getenv('FOLIOSHELL_HOME');
+
+        if (!empty($customHome)) {
+            $home = $customHome;
+        }
+
+        return rtrim($home, '/') . '/.foliolabs/folioshell';
     }
 
     /**
@@ -89,9 +108,12 @@ class Application extends \Symfony\Component\Console\Application
      */
     public function getPluginPath()
     {
+        if (empty($this->_plugin_path)) {
+            $this->_plugin_path = $this->getConsoleHome() . '/plugins';
+        }
+
         return $this->_plugin_path;
     }
-
 
     /**
      * Gets the default commands that should always be available.
@@ -104,8 +126,13 @@ class Application extends \Symfony\Component\Console\Application
 
         $commands = array_merge($commands, array(
             new Command\Wp(),
+
+            new Command\DatabaseDrop(), 
+            new Command\DatabaseExport(), 
+            
             new Command\SiteCreate(),
             new Command\SiteDelete(),
+            new Command\SiteExport(),
             new Command\SiteList(),
 
             new Command\Extension\Symlink(),
@@ -162,7 +189,7 @@ class Application extends \Symfony\Component\Console\Application
                         continue;
                     }
 
-                    if (isset($manifest->type) && $manifest->type == 'wp-console-plugin') {
+                    if (isset($manifest->type) && $manifest->type == 'folioshell-plugin') {
                         $this->_plugins[$package] = $version;
                     }
                 }
@@ -170,6 +197,68 @@ class Application extends \Symfony\Component\Console\Application
         }
 
         return $this->_plugins;
+    }
+
+    /**
+     * Loads extra commands from the ~/.foliolabs/folioshell/commands/ folder 
+     * 
+     * Each PHP file in the folder is included and if the class in the file extends the base Symfony command
+     * it's instantiated and added to the app. 
+     *
+     * @return void
+     */
+    protected function _loadExtraCommands()
+    {
+        $path = $this->getConsoleHome().'/commands';
+
+        if (\is_dir($path)) 
+        {
+            $iterator = new \DirectoryIterator($path);
+
+            foreach ($iterator as $file)
+            {
+                if ($file->getExtension() == 'php') 
+                {
+                    require $file->getPathname();
+
+                    $className  = $file->getBasename('.php');
+
+                    if (\class_exists($className)) 
+                    {
+                        $reflection = new \ReflectionClass($className);
+    
+                        if (!$reflection->isSubclassOf('\Symfony\Component\Console\Command\Command')) {
+                            continue;
+                        }
+                        
+                        $command = new $className();
+    
+                        if (!$command instanceof \Symfony\Component\Console\Command\Command) {
+                            continue;
+                        }
+    
+                        $this->add($command);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Set up environment
+     */
+    protected function _setup()
+    {
+        $home = $this->getConsoleHome();
+
+        if (!file_exists($home))
+        {
+            $result = @mkdir($home, 0775, true);
+
+            if (!$result) {
+                $this->_output->writeln(sprintf('<error>Unable to create home directory: %s. Please check write permissions.</error>', $home));
+            }
+        }
     }
 
     /**
@@ -224,4 +313,5 @@ class Application extends \Symfony\Component\Console\Application
             }
         }
     }
+
 }

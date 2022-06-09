@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 
-class SiteDelete extends SiteAbstract
+class SiteDelete extends AbstractSite
 {
     protected function configure()
     {
@@ -43,16 +43,14 @@ class SiteDelete extends SiteAbstract
         $this->deleteFolder($input, $output);
         $this->deleteVirtualHost($input, $output);
         $this->deleteDatabase($input, $output);
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)
     {
         if ((strpos(getcwd(), $this->target_dir) === 0) && (getcwd() !== $this->www)) {
             throw new \RuntimeException('You are currently in the directory you are trying to delete. Aborting');
-        }
-
-        if (!file_exists($this->target_dir)) {
-            throw new \RuntimeException(sprintf('The site %s does not exist!', $this->site));
         }
     }
 
@@ -67,14 +65,22 @@ class SiteDelete extends SiteAbstract
             return;
         }
 
-        $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-        $command  = sprintf("echo 'DROP DATABASE IF EXISTS `$this->target_db`' | mysql -u'%s' %s", $this->mysql->user, $password);
+        $arguments = array(
+            'database:drop',
+            'site' => $this->site
+        );
 
-        $result   = exec($command);
-
-        if (!empty($result)) { // MySQL returned an error
-            throw new \RuntimeException(sprintf('Cannot delete database %s. Error: %s', $this->target_db, $result));
+        $optionalArgs = array('mysql-login', 'mysql-db-prefix', 'mysql-host', 'mysql-port', 'mysql-database');
+        foreach ($optionalArgs as $optionalArg)
+        {
+            $value = $input->getOption($optionalArg);
+            if (!empty($value)) {
+                $arguments['--' . $optionalArg] = $value;
+            }
         }
+
+        $command = new DatabaseDrop();
+        $command->run(new ArrayInput($arguments), $output);
     }
 
     public function deleteVirtualHost(InputInterface $input, OutputInterface $output)

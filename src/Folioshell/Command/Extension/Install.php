@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Install extends Command\SiteAbstract
+class Install extends Command\AbstractSite
 {
     protected $plugin = array();
 
@@ -46,6 +46,8 @@ class Install extends Command\SiteAbstract
 
         $this->check($input, $output);
         $this->install($input, $output);
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)

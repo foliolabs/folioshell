@@ -7,14 +7,11 @@
 
 namespace Folioshell\Command;
 
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Wp extends Command
+class Wp extends AbstractSite
 {
     protected static $wp;
 
@@ -40,19 +37,35 @@ class Wp extends Command
         parent::configure();
 
         $this->setName('wp')
-            ->setDescription('Run WP CLI commands with the syntax "folioshell box wp -- plugin activate"')
+            ->setDescription('Run WP CLI commands with the syntax "folioshell wp sitename -- config list"')
             ->addArgument('arguments', InputArgument::IS_ARRAY, 'Original arguments');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        parent::execute($input, $output);
+
         $arguments = $input->getArgument('arguments');
+
+        $has_path = false;
+        foreach ($arguments as $arg) {
+            if (strpos($arg, '--path') === 0) {
+                $has_path = true;
+                break;
+            }
+        }
 
         if (is_array($arguments)) {
             $arguments = implode(' ', $arguments);
         }
 
+        if (!$has_path) {
+            $arguments = '--path='.$this->target_dir.' '.$arguments;
+        }
+
         $output->writeln(static::call($arguments));
+
+        return 0;
     }
 
     protected static function _setWPPath()

@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class SiteCreate extends SiteAbstract
+class SiteCreate extends AbstractSite
 {
     /**
      * File cache
@@ -70,7 +70,7 @@ class SiteCreate extends SiteAbstract
             ->setName('site:create')
             ->setDescription('Create a WordPress site')
             ->addOption(
-                'wordpress',
+                'release',
                 null,
                 InputOption::VALUE_REQUIRED,
                 "WordPress version. Can be a release number (3.2, 4.2.1, ..) or branch name. Run `wordpress versions` for a full list.\nUse \"none\" for an empty virtual host.",
@@ -103,31 +103,52 @@ class SiteCreate extends SiteAbstract
                 80
             )
             ->addOption(
-                'disable-ssl',
-                null,
-                InputOption::VALUE_NONE,
-                'Disable SSL for this site'
-            )
-            ->addOption(
-                'ssl-crt',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The full path to the signed cerfificate file',
-                '/etc/apache2/ssl/server.crt'
-            )
-            ->addOption(
-                'ssl-key',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The full path to the private cerfificate file',
-                '/etc/apache2/ssl/server.key'
-            )
-            ->addOption(
                 'ssl-port',
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'The port on which the server will listen for SSL requests',
                 '443'
+            )
+            ->addOption(
+                'vhost', 
+                null,
+                InputOption::VALUE_NEGATABLE,
+                'Create an Apache vhost for the site',
+                true
+            )
+            ->addOption(
+                'vhost-template',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Custom file to use as the Apache vhost configuration. Make sure to include HTTP and SSL directives if you need both.',
+                null
+            )
+            ->addOption(
+                'vhost-folder',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The Apache2 vhost folder',
+                null
+            )
+            ->addOption(
+                'vhost-filename',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The Apache2 vhost file name',
+                null,
+            )
+            ->addOption(
+                'vhost-restart-command',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The full command for restarting Apache2',
+                null
+            )
+            ->addOption(
+                'chown',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Change file owner as the passed user'
             )
             ;
     }
@@ -135,6 +156,8 @@ class SiteCreate extends SiteAbstract
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         parent::execute($input, $output);
+
+        $this->version = $input->getOption('release');
 
         $this->symlink = $input->getOption('symlink');
         if (is_string($this->symlink)) {
@@ -146,28 +169,56 @@ class SiteCreate extends SiteAbstract
         $this->createDatabase($input, $output);
         $this->modifyConfiguration($input, $output);
         $this->installWordPress($input, $output);
-        $this->addVirtualHost($input, $output);
+
+        if ($input->getOption('vhost')) {
+            $this->addVirtualHost($input, $output);
+        }
+
         $this->symlinkProjects($input, $output);
         $this->installExtensions($input, $output);
 
+        if ($input->hasOption('chown')) {
+            $user = $input->getOption('chown');
+            `chown -R $user:$user $this->target_dir`;
+        }
+
+        /*
+         * Run all site:create:* commands after site creation
+         */
+        try {
+            $commands = $this->getApplication()->all('site:create');
+            
+            foreach ($commands as $command) {
+                $arguments = array(
+                    $command->getName(),
+                    'site'   => $this->site,
+                    '--www'  => $this->www
+                );
+                $command->setApplication($this->getApplication());
+                $command->run(new ArrayInput($arguments), $output);
+            }
+        }
+        catch (\Symfony\Component\Console\Exception\NamespaceNotFoundException $e) {}
+        catch (\Symfony\Component\Console\Exception\CommandNotFoundException $e) {}
+        
         $output->writeln("Your new <info>WordPress $this->version</info> site has been created.");
         $output->writeln("It was installed using the domain name <info>$this->site.test</info>.");
-        $output->writeln("Don't forget to add <info>$this->site.test</info> to your <info>/etc/hosts</info>");
         $output->writeln("You can login using the following username and password combination: <info>admin</info>/<info>admin</info>.");
+
+        return 0;
     }
 
     public function check(InputInterface $input, OutputInterface $output)
     {
-        if (file_exists($this->target_dir)) {
-            throw new \RuntimeException(sprintf('A site with name %s already exists', $this->site));
+        if (file_exists($this->target_dir) && !is_dir($this->target_dir)) {
+            throw new \RuntimeException(sprintf('A file named \'%s\' already exists', $this->site));
         }
 
-        $password = empty($this->mysql->password) ? '' : sprintf("-p'%s'", $this->mysql->password);
-        $result = exec(sprintf(
-                "echo 'SHOW DATABASES LIKE \"%s\"' | mysql -u'%s' %s",
-                $this->target_db, $this->mysql->user, $password
-            )
-        );
+        if (is_dir($this->target_dir) && count(scandir($this->target_dir)) > 2) {
+            throw new \RuntimeException(sprintf('Site directory \'%s\' is not empty.', $this->site));
+        }
+
+        $result = $this->_executeSQL(sprintf("SHOW DATABASES LIKE \"%s\"", $this->target_db));
 
         if (!empty($result)) { // Table exists
             throw new \RuntimeException(sprintf('A database with name %s already exists', $this->target_db));
@@ -176,7 +227,7 @@ class SiteCreate extends SiteAbstract
 
     public function createFolder(InputInterface $input, OutputInterface $output)
     {
-        $version = $input->getOption('wordpress');
+        $version = $input->getOption('release');
 
         `mkdir -p $this->target_dir`;
         $output->writeln(WP::call("core download --path=$this->target_dir --version=$version"));
@@ -195,7 +246,31 @@ class SiteCreate extends SiteAbstract
 
     public function modifyConfiguration(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln(WP::call("config create --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password} --extra-php=\"define( 'WP_DEBUG', true ); define( 'WP_DEBUG_LOG', true );\""));
+        $extra = false;
+        $extraPath = $this->getApplication()->getConsoleHome().'/wp-config.extra.php';
+
+        $command = "config create --force --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password}";
+
+        if (is_file($extraPath)) 
+        {
+            $extra = \file_get_contents($extraPath);
+            $replacement = "/** Folioshell extra */\n$extra\n/** End of Folioshell extra */";
+            $placeholder = '/**folioshell_placeholder*/';
+
+            $command .= " --extra-php=\"$placeholder\"";
+        }
+        
+        $output->writeln(WP::call($command));
+            
+        if ($extra)
+        {
+            $configPath = trim(WP::call("config --path={$this->target_dir} path"));
+
+            $config = \file_get_contents($configPath);
+            $config = \str_replace($placeholder, $replacement, $config);
+
+            \file_put_contents($configPath, $config);
+        }
     }
 
     public function installWordPress(InputInterface $input, OutputInterface $output)
@@ -214,21 +289,24 @@ class SiteCreate extends SiteAbstract
 
     public function addVirtualHost(InputInterface $input, OutputInterface $output)
     {
-        $command_input = new ArrayInput(array(
+        $command_input = array(
             'vhost:create',
             'site'          => $this->site,
             '--http-port'   => $input->getOption('http-port'),
-            '--disable-ssl' => $input->getOption('disable-ssl'),
-            '--ssl-crt'     => $input->getOption('ssl-crt'),
-            '--ssl-key'     => $input->getOption('ssl-key'),
             '--ssl-port'    => $input->getOption('ssl-port'),
-            '--www'         => $input->getOption('www')
-        ));
+            '--www'         => $input->getOption('www'),
+        );
+
+        foreach (array('template', 'folder', 'filename', 'restart-command') as $vhostkey) {
+            if ($input->getOption('vhost-'.$vhostkey) !== null) {
+                $command_input['--'.$vhostkey] = $input->getOption('vhost-'.$vhostkey);
+            }
+        }
 
         $command = new Vhost\Create();
-        $command->run($command_input, $output);
+        $command->run(new ArrayInput($command_input), $output);
     }
-
+    
     public function symlinkProjects(InputInterface $input, OutputInterface $output)
     {
         if ($this->symlink)
