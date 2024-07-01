@@ -249,7 +249,7 @@ class SiteCreate extends AbstractSite
         $extra = false;
         $extraPath = $this->getApplication()->getConsoleHome().'/wp-config.extra.php';
 
-        $command = "config create --force --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password}";
+        $command = "config create --force --path={$this->target_dir} --dbname={$this->target_db} --dbuser={$this->mysql->user} --dbpass={$this->mysql->password} --dbhost={$this->mysql->host}";
 
         if (is_file($extraPath)) 
         {
