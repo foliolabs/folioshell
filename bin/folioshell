@@ -1,10 +1,24 @@
-#!/usr/bin/env php
+#!/usr/bin/env -S XDEBUG_MODE=off php
 <?php
 /**
  * @copyright	Copyright (C) 2015 Johan Janssens and Timble CVBA. (http://www.timble.net)
  * @license		Mozilla Public License, version 2.0
  * @link		https://github.com/foliolabs/folioshell for the canonical source repository
  */
+
+/*
+ * Folioshell is a CLI tool, not something you step-debug. The shebang above
+ * launches PHP with XDEBUG_MODE=off so that a global "always on" Xdebug setup
+ * (XDEBUG_MODE=debug + start_with_request) doesn't make every run try, and fail,
+ * to reach a debug client on :9003. The developer's global Xdebug config is left
+ * untouched for everything else. Requires `env -S`, available on macOS and
+ * GNU coreutils.
+ *
+ * We also silence the E_DEPRECATED notices emitted by the vendored Symfony
+ * Console and wp-cli on PHP 8.2+. Set before the autoloader pulls those files
+ * in, so their compile-time deprecation notices are suppressed too.
+ */
+error_reporting(E_ALL & ~E_DEPRECATED);
 
 $dirs = explode(DIRECTORY_SEPARATOR, __DIR__);
 

@@ -29,7 +29,20 @@ class Wp extends AbstractSite
 
         $wp = static::$wp;
 
-        return `{$wp} {$arguments}`;
+        /*
+         * Extracting the WordPress tarball (PharData) needs more than PHP's
+         * default 128M memory_limit. Without this, `core download` verifies the
+         * download and then dies with an out-of-memory fatal during extraction,
+         * leaving an empty site folder. We also raise error_reporting to hide
+         * the E_DEPRECATED notices that wp-cli 2.6 emits on PHP 8.2+, and turn
+         * Xdebug off for speed. An existing WP_CLI_PHP_ARGS is respected.
+         */
+        $php_args = getenv('WP_CLI_PHP_ARGS');
+        if ($php_args === false || $php_args === '') {
+            $php_args = '-d memory_limit=512M -d error_reporting=24575 -d xdebug.mode=off';
+        }
+
+        return `WP_CLI_PHP_ARGS="{$php_args}" {$wp} {$arguments}`;
     }
 
     protected function configure()
