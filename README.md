@@ -110,6 +110,18 @@ For more information, run:
 
 	folioshell extension:install --help
 	  
+To install a plugin you have already built, run `package:install`. Zips are
+looked up in `--projects-dir/<name>/` (default `~/Projects`); when more than
+one zip is present the newest is used unless you pass a version:
+
+    folioshell package:install testsite foliolabs
+    folioshell package:install testsite foliolabs:1.2.3
+    folioshell site:create testsite --install=foliolabs
+
+A filesystem path to a zip is also accepted. This is not `extension:install`
+(activate a symlink) and not `extension:installfile` (explicit zip or URL,
+no project-folder lookup).
+
 Alternatively, you can install plugins using packages or url using the `extension:installfile` command. Example:
 
     folioshell extension:installfile testsite /home/vagrant/pluginone.v1.x.zip /home/vagrant/plugintwo.v2.x.tar.gz
