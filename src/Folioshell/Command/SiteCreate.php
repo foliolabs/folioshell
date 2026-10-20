@@ -83,6 +83,12 @@ class SiteCreate extends AbstractSite
                 'A comma separated list of folders to symlink from projects folder'
             )
             ->addOption(
+                'install',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'A comma separated list of packages to install after the site is created. Each entry is a plugin name (latest zip in --projects-dir/<name>/), name:version, or a path to a zip. See package:install.'
+            )
+            ->addOption(
                 'clear-cache',
                 null,
                 InputOption::VALUE_NONE,
@@ -176,6 +182,7 @@ class SiteCreate extends AbstractSite
 
         $this->symlinkProjects($input, $output);
         $this->installExtensions($input, $output);
+        $this->installPackages($input, $output);
 
         if ($input->hasOption('chown')) {
             $user = $input->getOption('chown');
@@ -341,5 +348,30 @@ class SiteCreate extends AbstractSite
 
             $installer->run($plugin_input, $output);
         }
+    }
+
+    public function installPackages(InputInterface $input, OutputInterface $output)
+    {
+        $packages = $input->getOption('install');
+
+        if (is_string($packages)) {
+            $packages = array_filter(array_map('trim', explode(',', $packages)));
+        }
+
+        if (empty($packages)) {
+            return;
+        }
+
+        $arguments = array(
+            'package:install',
+            'site'           => $input->getArgument('site'),
+            'package'        => $packages,
+            '--www'          => $this->www,
+            '--projects-dir' => $input->getOption('projects-dir'),
+        );
+
+        $installer = new Package\Install();
+        $installer->setApplication($this->getApplication());
+        $installer->run(new ArrayInput($arguments), $output);
     }
 }

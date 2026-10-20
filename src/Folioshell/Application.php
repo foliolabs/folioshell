@@ -140,6 +140,8 @@ class Application extends \Symfony\Component\Console\Application
             new Command\Extension\Install(),
             new Command\Extension\InstallFile(),
 
+            new Command\Package\Install(),
+
             new Command\Vhost\Create(),
             new Command\Vhost\Remove(),
         ));
