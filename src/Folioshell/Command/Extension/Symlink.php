@@ -112,7 +112,8 @@ EOL
         foreach ($this->symlink as $symlink)
         {
             $this->projects[] = $symlink;
-            $this->projects   = array_unique(array_merge($this->projects, $this->_getDependencies($symlink)));
+            // Dependencies are registered per repository, so `foliolabs-docman/pro` resolves as `foliolabs-docman`
+            $this->projects   = array_unique(array_merge($this->projects, $this->_getDependencies(strtok($symlink, '/'))));
         }
 
         $this->check($input, $output);
